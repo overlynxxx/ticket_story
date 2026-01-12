@@ -13,15 +13,67 @@ function Home({ webApp, config }) {
 
   return (
     <div className="home-container">
-      <div className="event-header">
-        <h1 className="event-title">{config.event.name}</h1>
-        <div className="event-info">
-          <p className="event-date">📅 {config.event.date}</p>
-          <p className="event-time">🕐 {config.event.time}</p>
-          <p className="event-venue">📍 {config.event.venue}</p>
+      {/* Афиша */}
+      <div className="poster-container">
+        <div className="poster-background">
+          <div className="poster-content">
+            <div className="poster-label">КОНЦЕРТ</div>
+            <h1 className="poster-title">
+              <span className="title-blue">LIVE IN</span>
+              <span className="title-red"> TUPIK</span>
+            </h1>
+            <div className="poster-artists">{config.event.subtitle}</div>
+            <div className="poster-date">
+              {config.event.date} - «{config.event.venue}» - {config.event.time}
+            </div>
+            <div className="poster-battle">ОТКРЫТЫЙ БАТТЛ ЗА ГЛАВНЫЙ ПРИЗ</div>
+            <div className="poster-host">ВЕДУЩИЙ – {config.event.host}</div>
+          </div>
         </div>
       </div>
 
+      {/* Описание события */}
+      {config.event.description && (
+        <div className="event-description">
+          <p className="description-text">{config.event.description}</p>
+        </div>
+      )}
+
+      {/* Призы */}
+      {config.event.prizes && config.event.prizes.length > 0 && (
+        <div className="prizes-section">
+          <h3 className="prizes-title">Призы:</h3>
+          <div className="prizes-list">
+            {config.event.prizes.map((prize, index) => (
+              <div key={index} className="prize-item">
+                <div className="prize-header">
+                  <span className="prize-emoji">{prize.place}</span>
+                  <span className="prize-title">{prize.title}</span>
+                </div>
+                <p className="prize-description">{prize.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Информация о событии */}
+      <div className="event-details">
+        <div className="detail-item">
+          <span className="detail-icon">📍</span>
+          <span className="detail-text">{config.event.address}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-icon">🗓</span>
+          <span className="detail-text">{config.event.date}</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-icon">🕕</span>
+          <span className="detail-text">Начало в {config.event.time}</span>
+        </div>
+      </div>
+
+      {/* Выбор билетов */}
       <div className="tickets-section">
         <h2 className="section-title">Выберите категорию билета</h2>
         <div className="ticket-categories">

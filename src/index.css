@@ -10,8 +10,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--tg-theme-bg-color, #ffffff);
-  color: var(--tg-theme-text-color, #000000);
+  background: var(--tg-theme-bg-color, #0a0a0a);
+  color: var(--tg-theme-text-color, #ffffff);
   min-height: 100vh;
 }
 

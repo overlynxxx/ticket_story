@@ -1,48 +1,225 @@
 .home-container {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: #0a0a0a;
+  color: #ffffff;
 }
 
-.event-header {
-  text-align: center;
-  margin-bottom: 30px;
+/* Афиша */
+.poster-container {
+  position: relative;
+  width: 100%;
   padding: 20px;
-  background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-  border-radius: 16px;
+  margin-bottom: 24px;
 }
 
-.event-title {
-  font-size: 28px;
-  font-weight: 700;
+.poster-background {
+  position: relative;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  border-radius: 0;
+  padding: 24px 20px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.poster-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(255, 0, 100, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.poster-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.poster-label {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.poster-title {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.1;
   margin-bottom: 16px;
-  color: var(--tg-theme-text-color, #000000);
+  letter-spacing: -1px;
 }
 
-.event-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.title-blue {
+  color: #00d4ff;
+  text-shadow: 
+    0 0 10px rgba(0, 212, 255, 0.8),
+    0 0 20px rgba(0, 212, 255, 0.5),
+    0 0 30px rgba(0, 212, 255, 0.3);
 }
 
-.event-info p {
+.title-red {
+  color: #ff006e;
+  text-shadow: 
+    0 0 10px rgba(255, 0, 110, 0.8),
+    0 0 20px rgba(255, 0, 110, 0.5),
+    0 0 30px rgba(255, 0, 110, 0.3);
+}
+
+.poster-artists {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 16px;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.poster-date {
   font-size: 16px;
-  color: var(--tg-theme-hint-color, #999999);
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+.poster-battle {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.poster-host {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 12px;
+}
+
+/* Описание события */
+.event-description {
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.description-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: pre-line;
   margin: 0;
 }
 
+/* Призы */
+.prizes-section {
+  padding: 20px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.prizes-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.prizes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prize-item {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prize-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.prize-emoji {
+  font-size: 24px;
+}
+
+.prize-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.prize-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 36px;
+}
+
+/* Детали события */
+.event-details {
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.detail-icon {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+}
+
+.detail-text {
+  flex: 1;
+}
+
+/* Билеты */
 .tickets-section {
+  padding: 0 20px 20px;
   flex: 1;
 }
 
 .section-title {
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 20px;
-  color: var(--tg-theme-text-color, #000000);
+  color: #ffffff;
+  text-align: center;
 }
 
 .ticket-categories {
@@ -52,13 +229,22 @@
 }
 
 .ticket-card {
-  background: var(--tg-theme-bg-color, #ffffff);
-  border: 2px solid var(--tg-theme-button-color, #3390ec);
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(0, 212, 255, 0.5);
   border-radius: 16px;
   padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.ticket-card:hover {
+  border-color: rgba(0, 212, 255, 0.8);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(0, 212, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 .ticket-card:active {
@@ -69,7 +255,7 @@
 .ticket-card.disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  border-color: var(--tg-theme-hint-color, #999999);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .ticket-card-header {
@@ -81,19 +267,20 @@
 
 .ticket-category-name {
   font-size: 20px;
-  font-weight: 600;
-  color: var(--tg-theme-text-color, #000000);
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .ticket-price {
   font-size: 24px;
   font-weight: 700;
-  color: var(--tg-theme-button-color, #3390ec);
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
 .ticket-description {
   font-size: 14px;
-  color: var(--tg-theme-hint-color, #999999);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.5;
 }
 
@@ -101,8 +288,9 @@
   display: inline-block;
   margin-top: 12px;
   padding: 6px 12px;
-  background: var(--tg-theme-destructive-text-color, #ff3b30);
-  color: white;
+  background: rgba(255, 0, 110, 0.3);
+  color: #ff006e;
+  border: 1px solid rgba(255, 0, 110, 0.5);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
@@ -111,11 +299,39 @@
 /* Адаптивность */
 @media (max-width: 480px) {
   .home-container {
+    padding: 0;
+  }
+
+  .poster-container {
     padding: 16px;
   }
 
-  .event-title {
-    font-size: 24px;
+  .poster-background {
+    padding: 20px 16px;
+  }
+
+  .poster-title {
+    font-size: 28px;
+  }
+
+  .poster-artists {
+    font-size: 16px;
+  }
+
+  .poster-date {
+    font-size: 14px;
+  }
+
+  .event-description,
+  .prizes-section,
+  .event-details,
+  .tickets-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .prizes-title {
+    font-size: 18px;
   }
 
   .section-title {
@@ -132,5 +348,17 @@
 
   .ticket-price {
     font-size: 22px;
+  }
+
+  .prize-description {
+    padding-left: 0;
+    margin-top: 8px;
+  }
+}
+
+/* Поддержка темной темы Telegram */
+@media (prefers-color-scheme: light) {
+  .home-container {
+    background: #0a0a0a;
   }
 }
