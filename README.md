@@ -71,6 +71,48 @@ npm run build
 
 Собранные файлы будут в папке `dist`
 
+## Автоматический деплой на GitHub
+
+### Быстрый старт
+
+1. **Создайте репозиторий на GitHub:**
+   - Перейдите на [github.com](https://github.com)
+   - Создайте новый репозиторий (например, `ticket_story`)
+
+2. **Подключите локальный репозиторий:**
+   ```bash
+   git remote add origin https://github.com/ВАШ_USERNAME/ticket_story.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+3. **Настройте автоматический деплой:**
+   - См. подробную инструкцию в [.github/DEPLOY.md](.github/DEPLOY.md)
+   - Рекомендуется использовать **Vercel** или **Netlify** для Telegram Mini Apps
+
+### Автоматический коммит и пуш
+
+Используйте команду для автоматического коммита и пуша:
+
+```bash
+npm run deploy
+```
+
+Или вручную:
+```bash
+git add .
+git commit -m "Описание изменений"
+git push
+```
+
+### GitHub Actions
+
+При каждом push в ветку `main` автоматически:
+- ✅ Собирается проект
+- ✅ Деплоится на GitHub Pages (или Vercel/Netlify)
+
+См. файлы в `.github/workflows/` для настройки.
+
 ## Структура проекта
 
 ```
