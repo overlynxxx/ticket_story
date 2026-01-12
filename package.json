@@ -6,6 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "deploy:dev": "git add . && git commit -m 'Dev: $(date)' && git push origin dev",
+    "deploy:main": "git checkout main && git merge dev && git push origin main && git checkout dev",
     "deploy": "git add . && git commit -m 'Update: $(date)' && git push",
     "deploy:force": "git add . && git commit -m 'Update: $(date)' && git push --force"
   },
