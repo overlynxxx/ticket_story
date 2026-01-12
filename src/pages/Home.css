@@ -1,0 +1,136 @@
+.home-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+  border-radius: 16px;
+}
+
+.event-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--tg-theme-text-color, #000000);
+}
+
+.event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-info p {
+  font-size: 16px;
+  color: var(--tg-theme-hint-color, #999999);
+  margin: 0;
+}
+
+.tickets-section {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--tg-theme-text-color, #000000);
+}
+
+.ticket-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ticket-card {
+  background: var(--tg-theme-bg-color, #ffffff);
+  border: 2px solid var(--tg-theme-button-color, #3390ec);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-card:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.ticket-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--tg-theme-hint-color, #999999);
+}
+
+.ticket-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ticket-category-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color, #000000);
+}
+
+.ticket-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--tg-theme-button-color, #3390ec);
+}
+
+.ticket-description {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color, #999999);
+  line-height: 1.5;
+}
+
+.ticket-unavailable {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: var(--tg-theme-destructive-text-color, #ff3b30);
+  color: white;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .home-container {
+    padding: 16px;
+  }
+
+  .event-title {
+    font-size: 24px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .ticket-card {
+    padding: 16px;
+  }
+
+  .ticket-category-name {
+    font-size: 18px;
+  }
+
+  .ticket-price {
+    font-size: 22px;
+  }
+}

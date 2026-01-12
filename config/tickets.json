@@ -1,0 +1,35 @@
+{
+  "event": {
+    "name": "Концерт",
+    "date": "2024-12-31",
+    "time": "20:00",
+    "venue": "Концертный зал"
+  },
+  "ticketCategories": [
+    {
+      "id": "economy",
+      "name": "Эконом",
+      "price": 1000,
+      "description": "Стандартные места в зале",
+      "available": true
+    },
+    {
+      "id": "standard",
+      "name": "Стандарт",
+      "price": 2000,
+      "description": "Комфортные места с хорошим обзором",
+      "available": true
+    },
+    {
+      "id": "vip",
+      "name": "VIP",
+      "price": 5000,
+      "description": "Премиум места в первых рядах",
+      "available": true
+    }
+  ],
+  "yookassa": {
+    "shopId": "YOUR_SHOP_ID",
+    "secretKey": "YOUR_SECRET_KEY"
+  }
+}
