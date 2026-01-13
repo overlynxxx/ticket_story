@@ -4,6 +4,7 @@
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
@@ -211,6 +212,97 @@
   }
 }
 
+/* Слайдер для нескольких билетов */
+.ticket-slider-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: rgba(0, 168, 255, 0.1);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 168, 255, 0.3);
+}
+
+.slider-button {
+  background: linear-gradient(135deg, #00a8ff 0%, #ff006e 100%);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slider-button:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 20px rgba(0, 168, 255, 0.4);
+}
+
+.slider-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ticket-counter {
+  font-size: 16px;
+  font-weight: 600;
+  color: #00a8ff;
+  text-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
+}
+
+/* Кнопки сохранения */
+.ticket-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.save-button,
+.wallet-button {
+  flex: 1;
+  min-width: 150px;
+  background: linear-gradient(135deg, #00a8ff 0%, #ff006e 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.save-button:hover,
+.wallet-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 168, 255, 0.4);
+}
+
+.save-button:active,
+.wallet-button:active {
+  transform: translateY(0);
+}
+
+.wallet-button {
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
+}
+
+.wallet-button:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
 /* Печать билета */
 @media print {
   .ticket-view-container {
@@ -233,5 +325,10 @@
   .detail-value:not(.ticket-id) {
     color: #000;
     text-shadow: none;
+  }
+
+  .ticket-slider-controls,
+  .ticket-actions {
+    display: none;
   }
 }

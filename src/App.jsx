@@ -5,6 +5,7 @@ import EventDetail from './pages/EventDetail'
 import TicketSelection from './pages/TicketSelection'
 import Payment from './pages/Payment'
 import TicketView from './pages/TicketView'
+import PaymentSuccess from './pages/PaymentSuccess'
 import ticketsConfig from '../config/tickets.json'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         <Route path="/event/:eventId/select/:categoryId" element={<TicketSelection webApp={webApp} config={ticketsConfig} />} />
         <Route path="/event/:eventId/payment/:categoryId" element={<Payment webApp={webApp} config={ticketsConfig} />} />
         <Route path="/ticket/:ticketId" element={<TicketView webApp={webApp} config={ticketsConfig} />} />
+        <Route path="/payment-success" element={<PaymentSuccess webApp={webApp} config={ticketsConfig} />} />
         {/* Старые маршруты для обратной совместимости */}
         <Route path="/select/:categoryId" element={<TicketSelection webApp={webApp} config={ticketsConfig} />} />
         <Route path="/payment/:categoryId" element={<Payment webApp={webApp} config={ticketsConfig} />} />

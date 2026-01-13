@@ -36,18 +36,25 @@ export default async function handler(req, res) {
     // Получаем информацию о платеже из ЮКассы
     const payment = await checkout.getPayment(paymentId);
 
-    // Если платеж успешен, создаем билет
-    let ticketId = null;
+    // Если платеж успешен, создаем билеты
+    let ticketIds = [];
     if (payment.status === 'succeeded' && payment.metadata) {
-      ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      // В продакшене здесь нужно сохранить билет в БД
+      const quantity = parseInt(payment.metadata.quantity || '1');
+      // Создаем отдельный билет для каждого купленного билета
+      for (let i = 0; i < quantity; i++) {
+        const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`;
+        ticketIds.push(ticketId);
+      }
+      // В продакшене здесь нужно сохранить билеты в БД
     }
 
     res.json({
       success: true,
       status: payment.status,
       paid: payment.paid,
-      ticketId: ticketId
+      ticketId: ticketIds[0] || null, // Первый билет для обратной совместимости
+      ticketIds: ticketIds, // Все билеты
+      metadata: payment.metadata // Передаем metadata для создания билетов
     });
   } catch (error) {
     console.error('Ошибка проверки платежа:', error);
