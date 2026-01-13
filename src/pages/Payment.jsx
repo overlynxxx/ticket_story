@@ -256,14 +256,16 @@ function Payment({ webApp, config }) {
         </div>
       )}
 
-      {/* Кнопка оплаты */}
-      <button 
-        className="payment-button" 
-        onClick={handlePayment}
-        disabled={isProcessing}
-      >
-        {isProcessing ? 'Обработка...' : totalPrice === 0 ? 'Получить билет' : 'Оплатить'}
-      </button>
+      {/* Кнопка оплаты - показываем только если НЕ в Telegram (в Telegram используется MainButton) */}
+      {!webApp && (
+        <button 
+          className="payment-button" 
+          onClick={handlePayment}
+          disabled={isProcessing}
+        >
+          {isProcessing ? 'Обработка...' : totalPrice === 0 ? 'Получить билет' : 'Оплатить'}
+        </button>
+      )}
 
       {isProcessing && (
         <div className="processing-overlay">
