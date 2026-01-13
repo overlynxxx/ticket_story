@@ -1,105 +1,137 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Footer from '../components/Footer'
 import './Home.css'
 
 function Home({ webApp, config }) {
   const navigate = useNavigate()
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [selectedEventId, setSelectedEventId] = useState(null)
 
-  const handleCategorySelect = (categoryId) => {
-    setSelectedCategory(categoryId)
-    navigate(`/select/${categoryId}`)
+  // Находим ближайшее мероприятие (по дате)
+  const nearestEvent = useMemo(() => {
+    if (!config.events || config.events.length === 0) return null
+    
+    const now = new Date()
+    const upcomingEvents = config.events
+      .filter(event => new Date(event.date) >= now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+    return upcomingEvents.length > 0 ? upcomingEvents[0] : config.events[0]
+  }, [config.events])
+
+  // Все мероприятия, отсортированные по дате
+  const allEvents = useMemo(() => {
+    if (!config.events) return []
+    return [...config.events].sort((a, b) => new Date(a.date) - new Date(b.date))
+  }, [config.events])
+
+  const handleEventSelect = (eventId) => {
+    setSelectedEventId(eventId)
+    const event = config.events.find(e => e.id === eventId)
+    if (event && event.ticketCategories && event.ticketCategories.length > 0) {
+      // Переходим к выбору билетов для выбранного мероприятия
+      navigate(`/event/${eventId}/select/${event.ticketCategories[0].id}`)
+    }
+  }
+
+  const handleCategorySelect = (eventId, categoryId) => {
+    navigate(`/event/${eventId}/select/${categoryId}`)
+  }
+
+  if (!nearestEvent) {
+    return (
+      <div className="home-container">
+        <div className="error-container">
+          <p>Нет доступных мероприятий</p>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
     <div className="home-container">
-      {/* Афиша */}
-      <div className="poster-container">
-        <div 
-          className="poster-image"
-          style={{
-            // Раскомментируйте следующую строку и укажите путь к вашему изображению:
-            // backgroundImage: 'url(/poster.jpg)',
-          }}
-        >
-          <div className="poster-overlay">
-            <div className="poster-content">
-              <div className="poster-label">КОНЦЕРТ</div>
-              <h1 className="poster-title">
-                <span className="title-blue">LIVE IN</span>{' '}
-                <span className="title-red">TUPIK</span>
-              </h1>
-              <div className="poster-artists">{config.event.artists}</div>
+      {/* Плашка "Ближайшее мероприятие" */}
+      <div className="nearest-event-banner">
+        <div className="banner-label">БЛИЖАЙШЕЕ МЕРОПРИЯТИЕ</div>
+        <div className="nearest-event-card" onClick={() => handleEventSelect(nearestEvent.id)}>
+          <div className="nearest-event-header">
+            <h2 className="nearest-event-title">{nearestEvent.name}</h2>
+            <div className="nearest-event-badge">🔥</div>
+          </div>
+          <div className="nearest-event-artists">{nearestEvent.artists}</div>
+          <div className="nearest-event-info">
+            <div className="nearest-event-date">
+              <span className="info-icon">🗓</span>
+              <span>{nearestEvent.date.split('-').reverse().join('.')}</span>
             </div>
+            <div className="nearest-event-time">
+              <span className="info-icon">🕕</span>
+              <span>{nearestEvent.time}</span>
+            </div>
+            <div className="nearest-event-venue">
+              <span className="info-icon">📍</span>
+              <span>{nearestEvent.venue}</span>
+            </div>
+          </div>
+          <div className="nearest-event-action">
+            <span className="action-text">Купить билеты</span>
+            <span className="action-arrow">→</span>
           </div>
         </div>
       </div>
 
-      {/* Основная информация о событии */}
-      <div className="event-main-info">
-        <div className="event-date-time">
-          <span className="date">🗓 {config.event.date.split('-').reverse().join('.')}</span>
-          <span className="separator">•</span>
-          <span className="venue">«{config.event.venue}»</span>
-          <span className="separator">•</span>
-          <span className="time">🕕 {config.event.time}</span>
-        </div>
-        <div className="event-address">📍 {config.event.address}</div>
-      </div>
-
-      {/* Описание события */}
-      <div className="event-description-section">
-        <h2 className="section-title-neon">{config.event.description}</h2>
-        <p className="description-text">
-          {config.event.battleInfo.description} 🎉
-        </p>
-        <p className="judges-text">
-          Судить будут легенды – <strong>{config.event.battleInfo.judges}</strong> 😎
-        </p>
-      </div>
-
-      {/* Призы */}
-      <div className="prizes-section">
-        <h3 className="prizes-title">Призы:</h3>
-        <div className="prizes-list">
-          {config.event.battleInfo.prizes.map((prize, index) => (
-            <div key={index} className="prize-item">
-              <div className="prize-place">{prize.place}</div>
-              <div className="prize-description">{prize.prize}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Ведущий */}
-      <div className="host-section">
-        <div className="host-label">🎙 Ведущий</div>
-        <div className="host-name">— {config.event.host}</div>
-      </div>
-
-      {/* Категории билетов */}
-      <div className="tickets-section">
-        <h2 className="section-title-neon tickets-title">Выберите категорию билета</h2>
-        <div className="ticket-categories">
-          {config.ticketCategories.map((category) => (
-            <div
-              key={category.id}
-              className={`ticket-card ${!category.available ? 'disabled' : ''}`}
-              onClick={() => category.available && handleCategorySelect(category.id)}
-            >
-              <div className="ticket-card-header">
-                <h3 className="ticket-category-name">{category.name}</h3>
-                <span className="ticket-price">{category.price} ₽</span>
+      {/* Список всех мероприятий */}
+      <div className="all-events-section">
+        <h2 className="section-title-neon">Все мероприятия</h2>
+        <div className="events-list">
+          {allEvents.map((event) => {
+            const isNearest = event.id === nearestEvent.id
+            return (
+              <div
+                key={event.id}
+                className={`event-card ${isNearest ? 'nearest' : ''}`}
+                onClick={() => handleEventSelect(event.id)}
+              >
+                <div className="event-card-header">
+                  <div className="event-card-title-section">
+                    <h3 className="event-card-title">{event.name}</h3>
+                    {isNearest && <span className="event-badge">Ближайшее</span>}
+                  </div>
+                  <div className="event-card-arrow">→</div>
+                </div>
+                <div className="event-card-artists">{event.artists}</div>
+                <div className="event-card-details">
+                  <div className="event-card-detail">
+                    <span className="detail-icon">🗓</span>
+                    <span>{event.date.split('-').reverse().join('.')}</span>
+                  </div>
+                  <div className="event-card-detail">
+                    <span className="detail-icon">🕕</span>
+                    <span>{event.time}</span>
+                  </div>
+                  <div className="event-card-detail">
+                    <span className="detail-icon">📍</span>
+                    <span>{event.venue}</span>
+                  </div>
+                </div>
+                {event.description && (
+                  <div className="event-card-description">{event.description}</div>
+                )}
+                {event.ticketCategories && event.ticketCategories.length > 0 && (
+                  <div className="event-card-tickets">
+                    <span className="tickets-label">Билеты от</span>
+                    <span className="tickets-price">
+                      {Math.min(...event.ticketCategories.map(c => c.price))} ₽
+                    </span>
+                  </div>
+                )}
               </div>
-              <p className="ticket-description">{category.description}</p>
-              {!category.available && (
-                <span className="ticket-unavailable">Недоступно</span>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
+
       <Footer />
     </div>
   )

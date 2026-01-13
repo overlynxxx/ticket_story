@@ -26,9 +26,12 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home webApp={webApp} config={ticketsConfig} />} />
+        <Route path="/event/:eventId/select/:categoryId" element={<TicketSelection webApp={webApp} config={ticketsConfig} />} />
+        <Route path="/event/:eventId/payment/:categoryId" element={<Payment webApp={webApp} config={ticketsConfig} />} />
+        <Route path="/ticket/:ticketId" element={<TicketView webApp={webApp} config={ticketsConfig} />} />
+        {/* Старые маршруты для обратной совместимости */}
         <Route path="/select/:categoryId" element={<TicketSelection webApp={webApp} config={ticketsConfig} />} />
         <Route path="/payment/:categoryId" element={<Payment webApp={webApp} config={ticketsConfig} />} />
-        <Route path="/ticket/:ticketId" element={<TicketView webApp={webApp} config={ticketsConfig} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

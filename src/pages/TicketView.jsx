@@ -8,10 +8,17 @@ function TicketView({ webApp, config }) {
   const { ticketId } = useParams()
   const [searchParams] = useSearchParams()
   const categoryId = searchParams.get('category')
+  const eventId = searchParams.get('eventId')
   const quantity = parseInt(searchParams.get('quantity') || '1')
   const [ticketData, setTicketData] = useState(null)
 
-  const category = config.ticketCategories.find(cat => cat.id === categoryId)
+  // Находим мероприятие
+  const event = eventId 
+    ? config.events?.find(e => e.id === eventId)
+    : config.events?.[0] // Для обратной совместимости
+
+  // Находим категорию билетов
+  const category = event?.ticketCategories?.find(cat => cat.id === categoryId)
 
   useEffect(() => {
     if (webApp) {
@@ -23,21 +30,30 @@ function TicketView({ webApp, config }) {
     }
 
     // Генерируем данные билета
-    if (ticketId && category) {
+    if (ticketId && category && event) {
       setTicketData({
         id: ticketId,
         category: category.name,
         price: category.price,
         quantity: quantity,
-        eventName: config.event.name,
-        eventDate: config.event.date,
-        eventTime: config.event.time,
-        eventVenue: config.event.venue,
+        eventName: event.name,
+        eventDate: event.date,
+        eventTime: event.time,
+        eventVenue: event.venue,
         purchaseDate: new Date().toLocaleDateString('ru-RU'),
         purchaseTime: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
       })
     }
-  }, [ticketId, category, quantity, config, webApp])
+  }, [ticketId, category, event, quantity, webApp])
+
+  if (!event) {
+    return (
+      <div className="error-container">
+        <p>Мероприятие не найдено</p>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!ticketData || !category) {
     return (
@@ -52,8 +68,9 @@ function TicketView({ webApp, config }) {
     ticketId: ticketData.id,
     category: categoryId,
     quantity: quantity,
-    event: config.event.name,
-    date: config.event.date
+    event: event.name,
+    eventId: event.id,
+    date: event.date
   })
 
   return (

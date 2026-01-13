@@ -20,6 +20,16 @@
   backdrop-filter: blur(10px);
 }
 
+.selection-event-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00a8ff;
+  text-shadow: 0 0 10px rgba(0, 168, 255, 0.6);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .selection-title {
   font-size: 28px;
   font-weight: 700;

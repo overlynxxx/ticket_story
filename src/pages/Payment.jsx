@@ -4,14 +4,20 @@ import Footer from '../components/Footer'
 import './Payment.css'
 
 function Payment({ webApp, config }) {
-  const { categoryId } = useParams()
+  const { eventId, categoryId } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const quantity = parseInt(searchParams.get('quantity') || '1')
   const [paymentMethod, setPaymentMethod] = useState('qr')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const category = config.ticketCategories.find(cat => cat.id === categoryId)
+  // Находим мероприятие
+  const event = eventId 
+    ? config.events?.find(e => e.id === eventId)
+    : config.events?.[0] // Для обратной совместимости
+
+  // Находим категорию билетов
+  const category = event?.ticketCategories?.find(cat => cat.id === categoryId)
   const totalPrice = category ? category.price * quantity : 0
 
   useEffect(() => {
@@ -42,6 +48,7 @@ function Payment({ webApp, config }) {
           amount: totalPrice,
           ticketCategory: categoryId,
           quantity: quantity,
+          eventId: eventId || event.id,
           userId: webApp?.initDataUnsafe?.user?.id || 'anonymous'
         })
       })
@@ -58,7 +65,7 @@ function Payment({ webApp, config }) {
             const statusData = await statusResponse.json()
             
             if (statusData.status === 'succeeded') {
-              navigate(`/ticket/${statusData.ticketId}?category=${categoryId}&quantity=${quantity}`)
+              navigate(`/ticket/${statusData.ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId || event.id}`)
             } else {
               setTimeout(checkPaymentStatus, 3000) // Проверяем каждые 3 секунды
             }
@@ -70,14 +77,27 @@ function Payment({ webApp, config }) {
       
       // ДЕМО РЕЖИМ: Симуляция успешной оплаты
       const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const currentEventId = eventId || event?.id
       setTimeout(() => {
-        navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}`)
+        navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
       }, 1500)
     } catch (error) {
       console.error('Ошибка оплаты:', error)
       alert('Произошла ошибка при обработке платежа')
       setIsProcessing(false)
     }
+  }
+
+  if (!event) {
+    return (
+      <div className="error-container">
+        <p>Мероприятие не найдено</p>
+        <button onClick={() => navigate('/')} className="back-button">
+          Вернуться назад
+        </button>
+        <Footer />
+      </div>
+    )
   }
 
   if (!category) {
@@ -87,6 +107,7 @@ function Payment({ webApp, config }) {
         <button onClick={() => navigate('/')} className="back-button">
           Вернуться назад
         </button>
+        <Footer />
       </div>
     )
   }
@@ -94,6 +115,7 @@ function Payment({ webApp, config }) {
   return (
     <div className="payment-container">
       <div className="payment-header">
+        <div className="payment-event-name">{event.name}</div>
         <h2 className="payment-title">Оплата билетов</h2>
         <div className="payment-summary">
           <p>{category.name} × {quantity}</p>

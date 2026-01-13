@@ -4,11 +4,29 @@ import Footer from '../components/Footer'
 import './TicketSelection.css'
 
 function TicketSelection({ webApp, config }) {
-  const { categoryId } = useParams()
+  const { eventId, categoryId } = useParams()
   const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
 
-  const category = config.ticketCategories.find(cat => cat.id === categoryId)
+  // Находим мероприятие
+  const event = eventId 
+    ? config.events?.find(e => e.id === eventId)
+    : config.events?.[0] // Для обратной совместимости
+
+  // Находим категорию билетов
+  const category = event?.ticketCategories?.find(cat => cat.id === categoryId)
+
+  if (!event) {
+    return (
+      <div className="error-container">
+        <p>Мероприятие не найдено</p>
+        <button onClick={() => navigate('/')} className="back-button">
+          Вернуться назад
+        </button>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!category || !category.available) {
     return (
@@ -25,7 +43,8 @@ function TicketSelection({ webApp, config }) {
   const totalPrice = category.price * quantity
 
   const handlePurchase = () => {
-    navigate(`/payment/${categoryId}?quantity=${quantity}`)
+    const currentEventId = eventId || event.id
+    navigate(`/event/${currentEventId}/payment/${categoryId}?quantity=${quantity}`)
   }
 
   const handleQuantityChange = (delta) => {
@@ -36,6 +55,7 @@ function TicketSelection({ webApp, config }) {
   return (
     <div className="selection-container">
       <div className="selection-header">
+        <div className="selection-event-name">{event.name}</div>
         <h2 className="selection-title">{category.name}</h2>
         <p className="selection-description">{category.description}</p>
       </div>
