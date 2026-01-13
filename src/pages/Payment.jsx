@@ -184,6 +184,15 @@ function Payment({ webApp, config }) {
         </div>
       )}
 
+      {/* Кнопка оплаты */}
+      <button 
+        className="payment-button" 
+        onClick={handlePayment}
+        disabled={isProcessing}
+      >
+        {isProcessing ? 'Обработка...' : totalPrice === 0 ? 'Получить билет' : 'Оплатить'}
+      </button>
+
       {isProcessing && (
         <div className="processing-overlay">
           <div className="processing-spinner"></div>
