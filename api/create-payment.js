@@ -101,7 +101,13 @@ export default async function handler(req, res) {
     });
 
     // Создаем платеж в ЮКассе
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
     const idempotenceKey = uuidv4();
+    
+    // Формируем return_url
+    const returnUrl = process.env.RETURN_URL || 
+                     (req.headers.origin ? `${req.headers.origin}/payment-success` : 'https://ticket-story.vercel.app/payment-success');
+    
     const payment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
@@ -109,9 +115,9 @@ export default async function handler(req, res) {
       },
       confirmation: {
         type: 'qr',
-        return_url: process.env.RETURN_URL || `${req.headers.origin || 'https://your-app.vercel.app'}/payment-success`,
+        return_url: returnUrl,
       },
-      capture: true,
+      capture: true, // Одностадийный платеж (сразу списываем деньги)
       description: `Билеты: ${event.name} - ${category.name} × ${quantity}`,
       metadata: {
         eventId,
@@ -132,15 +138,27 @@ export default async function handler(req, res) {
       confirmationData: payment.confirmation?.confirmation_data
     });
 
-    // Для QR-кода используем confirmation_url или confirmation_data
-    const qrCode = payment.confirmation?.confirmation_url || payment.confirmation?.confirmation_data;
+    // Для QR-кода используем confirmation_data (строка с данными для QR)
+    // Если его нет, используем confirmation_url (URL для оплаты)
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
+    const qrCode = payment.confirmation?.confirmation_data || payment.confirmation?.confirmation_url;
+
+    // Проверяем, что получили данные для QR-кода
+    if (!qrCode) {
+      console.error('No QR code data in payment response:', payment);
+      return res.status(500).json({
+        success: false,
+        error: 'Не получены данные для QR-кода от ЮКассы'
+      });
+    }
 
     res.json({
       success: true,
       paymentId: payment.id,
       confirmationUrl: payment.confirmation?.confirmation_url,
       qrCode: qrCode,
-      amount: amount
+      amount: amount,
+      status: payment.status // Добавляем статус для отладки
     });
   } catch (error) {
     // Детальное логирование ошибки
