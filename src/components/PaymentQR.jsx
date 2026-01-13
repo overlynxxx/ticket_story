@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import { API_URL } from '../utils/api'
 import './PaymentQR.css'
 
 function PaymentQR({ paymentUrl, paymentId, paymentData, onPaymentSuccess, onPaymentCancel }) {
   const [paymentStatus, setPaymentStatus] = useState('pending')
   const [checking, setChecking] = useState(false)
 
-  // URL бэкенда
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001'
   const useBackend = paymentData && paymentData.useBackend !== false
 
   // Проверка статуса платежа

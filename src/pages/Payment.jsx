@@ -3,10 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Footer from '../components/Footer'
 import PaymentQR from '../components/PaymentQR'
 import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
+import { API_URL } from '../utils/api'
 import './Payment.css'
-
-// URL бэкенда (можно вынести в конфиг)
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001'
 
 function Payment({ webApp, config }) {
   const { eventId, categoryId } = useParams()
@@ -144,7 +142,13 @@ function Payment({ webApp, config }) {
       let errorMessage = 'Произошла ошибка при обработке платежа'
       
       if (error.name === 'AbortError' || error.message.includes('Failed to fetch')) {
-        errorMessage = 'Не удалось подключиться к серверу. Убедитесь, что бэкенд запущен на порту 3001, или проверьте подключение к интернету.'
+        // Если на Vercel, используем прямую интеграцию
+        if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com')) {
+          console.log('Бэкенд недоступен, используем прямую интеграцию с ЮКассой')
+          // Продолжаем с прямой интеграцией (fallback уже обработан выше)
+          return
+        }
+        errorMessage = `Не удалось подключиться к серверу (${API_URL}). Убедитесь, что бэкенд запущен, или проверьте подключение к интернету.`
       } else if (error.message) {
         errorMessage = error.message
       }
