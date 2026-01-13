@@ -27,15 +27,8 @@ function Home({ webApp, config }) {
 
   const handleEventSelect = (eventId) => {
     setSelectedEventId(eventId)
-    const event = config.events.find(e => e.id === eventId)
-    if (event && event.ticketCategories && event.ticketCategories.length > 0) {
-      // Переходим к выбору билетов для выбранного мероприятия
-      navigate(`/event/${eventId}/select/${event.ticketCategories[0].id}`)
-    }
-  }
-
-  const handleCategorySelect = (eventId, categoryId) => {
-    navigate(`/event/${eventId}/select/${categoryId}`)
+    // Переходим на детальную страницу мероприятия
+    navigate(`/event/${eventId}`)
   }
 
   if (!nearestEvent) {

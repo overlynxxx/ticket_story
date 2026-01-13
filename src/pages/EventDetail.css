@@ -1,0 +1,437 @@
+.event-detail-container {
+  padding: 0;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  background-attachment: fixed;
+  color: #ffffff;
+}
+
+/* Афиша */
+.poster-container {
+  width: 100%;
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.poster-image {
+  width: 100%;
+  min-height: 400px;
+  background: 
+    linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.85) 100%),
+    radial-gradient(circle at 50% 30%, rgba(0, 150, 255, 0.2) 0%, transparent 70%);
+  /* Если добавите изображение афиши, раскомментируйте следующую строку: */
+  /* background-image: url('/poster.jpg'); */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.poster-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 40%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(255, 0, 100, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.poster-overlay {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.poster-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.poster-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.poster-title {
+  font-size: 48px;
+  font-weight: 900;
+  margin: 20px 0;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.title-blue {
+  color: #00a8ff;
+  text-shadow: 
+    0 0 10px rgba(0, 168, 255, 0.8),
+    0 0 20px rgba(0, 168, 255, 0.6),
+    0 0 30px rgba(0, 168, 255, 0.4);
+  animation: glow-blue 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-blue {
+  from {
+    text-shadow: 
+      0 0 10px rgba(0, 168, 255, 0.8),
+      0 0 20px rgba(0, 168, 255, 0.6),
+      0 0 30px rgba(0, 168, 255, 0.4);
+  }
+  to {
+    text-shadow: 
+      0 0 15px rgba(0, 168, 255, 1),
+      0 0 25px rgba(0, 168, 255, 0.8),
+      0 0 35px rgba(0, 168, 255, 0.6);
+  }
+}
+
+.poster-artists {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-top: 16px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Основная информация о событии */
+.event-main-info {
+  padding: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.event-date-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.event-date-time .separator {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+.event-address {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.end-time {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Описание события */
+.event-description-section {
+  padding: 0 20px 24px;
+}
+
+.section-title-neon {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #00a8ff;
+  text-shadow: 0 0 10px rgba(0, 168, 255, 0.6);
+  text-align: center;
+}
+
+.description-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.judges-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+.judges-text strong {
+  color: #ff006e;
+  text-shadow: 0 0 8px rgba(255, 0, 110, 0.5);
+}
+
+/* Призы */
+.prizes-section {
+  padding: 24px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.prizes-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.prizes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prize-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #00a8ff;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.prize-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-left-color: #ff006e;
+  transform: translateX(4px);
+}
+
+.prize-place {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00a8ff;
+  margin-bottom: 8px;
+}
+
+.prize-description {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Ведущий */
+.host-section {
+  padding: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.host-label {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.host-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Категории билетов */
+.tickets-section {
+  padding: 0 20px 40px;
+  flex: 1;
+}
+
+.tickets-title {
+  margin-bottom: 24px;
+}
+
+.ticket-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ticket-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(0, 168, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.ticket-card:hover {
+  border-color: #00a8ff;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(0, 168, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.ticket-card:active {
+  transform: scale(0.98) translateY(0);
+}
+
+.ticket-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ticket-card.disabled:hover {
+  transform: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.ticket-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ticket-category-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.ticket-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #00a8ff;
+  text-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
+}
+
+.ticket-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+.ticket-unavailable {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(255, 0, 110, 0.3);
+  color: #ff006e;
+  border: 1px solid #ff006e;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.error-container {
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+}
+
+.error-container p {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.back-button {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #00a8ff 0%, #0097e6 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid rgba(0, 168, 255, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 168, 255, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 168, 255, 0.5);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .event-detail-container {
+    padding: 0;
+  }
+
+  .poster-image {
+    min-height: 300px;
+  }
+
+  .poster-title {
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+
+  .poster-artists {
+    font-size: 16px;
+  }
+
+  .event-date-time {
+    font-size: 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .event-date-time .separator {
+    display: none;
+  }
+
+  .section-title-neon {
+    font-size: 20px;
+  }
+
+  .ticket-card {
+    padding: 16px;
+  }
+
+  .ticket-category-name {
+    font-size: 18px;
+  }
+
+  .ticket-price {
+    font-size: 22px;
+  }
+
+  .prize-item {
+    padding: 12px;
+  }
+
+  .prize-place {
+    font-size: 16px;
+  }
+}

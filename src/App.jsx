@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
+import EventDetail from './pages/EventDetail'
 import TicketSelection from './pages/TicketSelection'
 import Payment from './pages/Payment'
 import TicketView from './pages/TicketView'
@@ -26,6 +27,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home webApp={webApp} config={ticketsConfig} />} />
+        <Route path="/event/:eventId" element={<EventDetail webApp={webApp} config={ticketsConfig} />} />
         <Route path="/event/:eventId/select/:categoryId" element={<TicketSelection webApp={webApp} config={ticketsConfig} />} />
         <Route path="/event/:eventId/payment/:categoryId" element={<Payment webApp={webApp} config={ticketsConfig} />} />
         <Route path="/ticket/:ticketId" element={<TicketView webApp={webApp} config={ticketsConfig} />} />
