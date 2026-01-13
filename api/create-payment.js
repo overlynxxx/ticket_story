@@ -108,10 +108,15 @@ export default async function handler(req, res) {
     const returnUrl = process.env.RETURN_URL || 
                      (req.headers.origin ? `${req.headers.origin}/payment-success` : 'https://ticket-story.vercel.app/payment-success');
     
+    // Для QR-кода через СБП нужно указать payment_method_data
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
     const payment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB',
+      },
+      payment_method_data: {
+        type: 'sbp' // Система быстрых платежей (СБП) для QR-кода
       },
       confirmation: {
         type: 'qr',
