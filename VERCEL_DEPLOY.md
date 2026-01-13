@@ -45,12 +45,16 @@ vercel
 
 ## Структура API на Vercel
 
+Vercel автоматически распознает файлы в папке `api/` как serverless functions.
+
 API endpoints доступны по адресу:
 - `https://your-app.vercel.app/api/create-payment`
 - `https://your-app.vercel.app/api/payment/[paymentId]/status`
 - `https://your-app.vercel.app/api/payment-webhook`
 - `https://your-app.vercel.app/api/events`
 - `https://your-app.vercel.app/api/health`
+
+**Примечание:** Vercel автоматически использует Node.js 18.x для всех функций в папке `api/`.
 
 ## Настройка фронтенда
 
