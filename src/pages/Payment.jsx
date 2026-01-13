@@ -99,6 +99,14 @@ function Payment({ webApp, config }) {
           console.log('Payment URL for SBP:', data.confirmationUrl)
           console.log('Full payment data:', data)
 
+          // Сохраняем paymentId в localStorage для случая, если return_url не сработает
+          localStorage.setItem('lastPaymentId', data.paymentId)
+          localStorage.setItem('lastPaymentData', JSON.stringify({
+            eventId: currentEventId,
+            categoryId: categoryId,
+            quantity: quantity
+          }))
+
           // Для СБП используем confirmation_url - это страница ЮКассы с QR-кодом
           // На странице пользователь увидит QR-код (на компьютере) или список банков (на мобильном)
           // Используем window.location.href для редиректа (работает везде)

@@ -12,79 +12,128 @@ function PaymentSuccess({ webApp, config }) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Получаем payment_id из URL (ЮКасса добавляет его в query параметры)
-    const urlPaymentId = searchParams.get('payment_id') || 
-                        searchParams.get('paymentId') || 
+    // Получаем payment_id из URL (ЮКасса может добавлять его по-разному)
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlPaymentId = urlParams.get('payment_id') || 
+                        urlParams.get('paymentId') || 
+                        urlParams.get('orderId') ||
+                        window.location.hash.match(/payment[_-]?id=([^&]+)/)?.[1] ||
                         window.location.search.match(/payment[_-]?id=([^&]+)/)?.[1]
     
+    console.log('PaymentSuccess - URL params:', {
+      search: window.location.search,
+      hash: window.location.hash,
+      urlPaymentId,
+      allParams: Object.fromEntries(urlParams)
+    })
+
     if (!urlPaymentId && !paymentId) {
-      setError('Не найден ID платежа в URL')
+      // Если нет payment_id, но есть другие параметры, пробуем найти в localStorage
+      const savedPaymentId = localStorage.getItem('lastPaymentId')
+      const savedPaymentData = localStorage.getItem('lastPaymentData')
+      
+      if (savedPaymentId) {
+        console.log('Using saved payment ID from localStorage:', savedPaymentId)
+        if (savedPaymentData) {
+          try {
+            const data = JSON.parse(savedPaymentData)
+            // Добавляем параметры в URL для использования в навигации
+            const params = new URLSearchParams(window.location.search)
+            if (data.eventId) params.set('eventId', data.eventId)
+            if (data.categoryId) params.set('categoryId', data.categoryId)
+            if (data.quantity) params.set('quantity', data.quantity.toString())
+            window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`)
+          } catch (e) {
+            console.error('Error parsing saved payment data:', e)
+          }
+        }
+        checkPaymentAndRedirect(savedPaymentId)
+        return
+      }
+      
+      setError('Не найден ID платежа. Проверьте URL или попробуйте оплатить снова.')
       setLoading(false)
       return
     }
 
     const actualPaymentId = urlPaymentId || paymentId
-
-    // Проверяем статус платежа
-    const checkPaymentStatus = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
-        
-        if (!response.ok) {
-          throw new Error('Не удалось проверить статус платежа')
-        }
-
-        const data = await response.json()
-        console.log('Payment status check:', data)
-        
-        if (data.success && data.status === 'succeeded') {
-          setPaymentStatus('succeeded')
-          
-          // Получаем данные из metadata платежа
-          const eventId = data.metadata?.eventId || searchParams.get('eventId')
-          const categoryId = data.metadata?.categoryId || searchParams.get('categoryId')
-          const quantity = parseInt(data.metadata?.quantity || searchParams.get('quantity') || '1')
-          
-          // Используем билеты из ответа API или генерируем новые
-          const ticketIds = data.ticketIds && data.ticketIds.length > 0
-            ? data.ticketIds
-            : (() => {
-                const ids = []
-                for (let i = 0; i < quantity; i++) {
-                  ids.push(`TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`)
-                }
-                return ids
-              })()
-          
-          // Перенаправляем на страницу билетов
-          const firstTicketId = ticketIds[0]
-          navigate(`/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId}&tickets=${ticketIds.join(',')}`, { replace: true })
-        } else if (data.status === 'canceled') {
-          setPaymentStatus('canceled')
-        } else {
-          setPaymentStatus('pending')
-          // Повторяем проверку через 2 секунды (максимум 10 попыток)
-          const attempts = parseInt(searchParams.get('attempts') || '0')
-          if (attempts < 10) {
-            setTimeout(() => {
-              const newSearchParams = new URLSearchParams(searchParams)
-              newSearchParams.set('attempts', (attempts + 1).toString())
-              window.location.search = newSearchParams.toString()
-            }, 2000)
-          } else {
-            setError('Превышено время ожидания подтверждения платежа')
-          }
-        }
-      } catch (err) {
-        console.error('Ошибка проверки платежа:', err)
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkPaymentStatus()
+    checkPaymentAndRedirect(actualPaymentId)
   }, [paymentId, navigate, searchParams])
+
+  const checkPaymentAndRedirect = async (actualPaymentId) => {
+    try {
+      console.log('Checking payment status for:', actualPaymentId)
+      const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${response.status}: Не удалось проверить статус платежа`)
+      }
+
+      const data = await response.json()
+      console.log('Payment status check result:', data)
+      
+      if (data.success && data.status === 'succeeded') {
+        setPaymentStatus('succeeded')
+        
+        // Получаем данные из metadata платежа
+        const eventId = data.metadata?.eventId || searchParams.get('eventId')
+        const categoryId = data.metadata?.categoryId || searchParams.get('categoryId')
+        const quantity = parseInt(data.metadata?.quantity || searchParams.get('quantity') || '1')
+        
+        if (!eventId || !categoryId) {
+          setError('Не найдены данные о мероприятии. Обратитесь в поддержку.')
+          setLoading(false)
+          return
+        }
+        
+        // Используем билеты из ответа API или генерируем новые
+        const ticketIds = data.ticketIds && data.ticketIds.length > 0
+          ? data.ticketIds
+          : (() => {
+              const ids = []
+              for (let i = 0; i < quantity; i++) {
+                ids.push(`TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`)
+              }
+              return ids
+            })()
+        
+        // Перенаправляем на страницу билетов
+        const firstTicketId = ticketIds[0]
+        const ticketUrl = `/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId}&tickets=${ticketIds.join(',')}`
+        console.log('Redirecting to ticket:', ticketUrl)
+        
+        // Очищаем сохраненный payment_id
+        localStorage.removeItem('lastPaymentId')
+        
+        navigate(ticketUrl, { replace: true })
+      } else if (data.status === 'canceled') {
+        setPaymentStatus('canceled')
+        setLoading(false)
+      } else {
+        setPaymentStatus('pending')
+        // Повторяем проверку через 2 секунды (максимум 15 попыток)
+        const attempts = parseInt(searchParams.get('attempts') || '0')
+        if (attempts < 15) {
+          setTimeout(() => {
+            const newSearchParams = new URLSearchParams(searchParams)
+            newSearchParams.set('attempts', (attempts + 1).toString())
+            if (actualPaymentId) {
+              newSearchParams.set('payment_id', actualPaymentId)
+            }
+            window.location.search = newSearchParams.toString()
+          }, 2000)
+        } else {
+          setError('Превышено время ожидания подтверждения платежа. Проверьте статус платежа в личном кабинете.')
+          setLoading(false)
+        }
+      }
+    } catch (err) {
+      console.error('Ошибка проверки платежа:', err)
+      setError(err.message || 'Ошибка при проверке статуса платежа')
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
