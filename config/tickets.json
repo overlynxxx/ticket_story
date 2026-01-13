@@ -52,6 +52,40 @@
           "available": true
         }
       ]
+    },
+    {
+      "id": "dnb-dark-inside-2025-01-19",
+      "name": "Dark Inside",
+      "artists": "Zigril // Qrutil // Вельмита // Nrja // Beata game // Pruff // k0walle // DkMk // SevaZahod",
+      "date": "2025-01-19",
+      "time": "20:00",
+      "endTime": "06:00",
+      "venue": "Бар Тупик",
+      "address": "СПб, Мельничная 4В",
+      "description": "DnB вечеринка с опытными днб-бойцами. Начнем со 135-140 BPM и любимого брейкбита, а после 00 вкручиваем днб и летим со скоростью 180. Free вход для подписчиков Zahod и Тупик.",
+      "ticketCategories": [
+        {
+          "id": "free",
+          "name": "Free вход",
+          "price": 0,
+          "description": "Для подписчиков Zahod и Тупик",
+          "available": true
+        },
+        {
+          "id": "standard",
+          "name": "Стандарт",
+          "price": 500,
+          "description": "Вход на вечеринку",
+          "available": true
+        },
+        {
+          "id": "vip",
+          "name": "VIP",
+          "price": 1000,
+          "description": "VIP зона",
+          "available": true
+        }
+      ]
     }
   ],
   "yookassa": {
