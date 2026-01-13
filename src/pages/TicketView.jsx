@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import html2canvas from 'html2canvas'
+import { API_URL } from '../utils/api'
 import './TicketView.css'
 
 function TicketView({ webApp, config }) {
@@ -77,71 +78,50 @@ function TicketView({ webApp, config }) {
     }
   }
 
-  const handleAddToWallet = () => {
-    // Генерируем PKPass для Apple Wallet
-    // В реальном приложении это должно быть на бэкенде
-    const passData = {
-      formatVersion: 1,
-      passTypeIdentifier: 'pass.com.ticketstory.event',
-      serialNumber: currentTicketId,
-      teamIdentifier: 'YOUR_TEAM_ID',
-      organizationName: 'Ticket Story',
-      description: event?.name || 'Билет на мероприятие',
-      logoText: 'Ticket',
-      foregroundColor: 'rgb(0, 168, 255)',
-      backgroundColor: 'rgb(10, 10, 10)',
-      eventTicket: {
-        primaryFields: [
-          {
-            key: 'event',
-            label: 'Мероприятие',
-            value: event?.name || ''
-          }
-        ],
-        secondaryFields: [
-          {
-            key: 'date',
-            label: 'Дата',
-            value: event?.date || ''
-          },
-          {
-            key: 'time',
-            label: 'Время',
-            value: event?.time || ''
-          }
-        ],
-        auxiliaryFields: [
-          {
-            key: 'venue',
-            label: 'Место',
-            value: event?.venue || ''
-          },
-          {
-            key: 'category',
-            label: 'Категория',
-            value: category?.name || ''
-          }
-        ],
-        barcode: {
-          message: JSON.stringify({
-            ticketId: currentTicketId,
-            category: categoryId,
-            event: event?.name,
-            eventId: event?.id,
-            date: event?.date
-          }),
-          format: 'PKBarcodeFormatQR',
-          messageEncoding: 'iso-8859-1'
+  const handleAddToWallet = async () => {
+    try {
+      // Запрашиваем .pkpass файл с сервера
+      const response = await fetch(`${API_URL}/api/ticket/${currentTicketId}/wallet?eventId=${eventId}&categoryId=${categoryId}`)
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Не удалось создать pass файл')
+      }
+
+      // Проверяем, что это действительно .pkpass файл
+      const contentType = response.headers.get('content-type')
+      if (contentType === 'application/vnd.apple.pkpass') {
+        // Скачиваем файл
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `ticket-${currentTicketId}.pkpass`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+
+        // На iOS автоматически откроется Wallet для добавления
+        if (webApp) {
+          webApp.showAlert('Билет загружен! Откройте файл для добавления в Apple Wallet.')
+        }
+      } else {
+        // Если сервер еще не настроен, показываем сообщение
+        const data = await response.json()
+        if (webApp) {
+          webApp.showAlert('Apple Wallet еще не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
+        } else {
+          alert('Apple Wallet еще не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
         }
       }
-    }
-
-    // Для Apple Wallet нужен подписанный .pkpass файл
-    // Это требует серверной части. Пока показываем инструкцию
-    if (webApp) {
-      webApp.showAlert('Для добавления в Apple Wallet нужна серверная подпись. Используйте функцию "Сохранить как фото" для сохранения билета.')
-    } else {
-      alert('Для добавления в Apple Wallet нужна серверная подпись. Используйте функцию "Сохранить как фото" для сохранения билета.')
+    } catch (error) {
+      console.error('Ошибка добавления в Apple Wallet:', error)
+      if (webApp) {
+        webApp.showAlert('Не удалось добавить билет в Apple Wallet. Используйте функцию "Сохранить как фото".')
+      } else {
+        alert('Не удалось добавить билет в Apple Wallet. Используйте функцию "Сохранить как фото".')
+      }
     }
   }
 
