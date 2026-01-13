@@ -1,0 +1,123 @@
+.payment-qr-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(10px);
+}
+
+.payment-qr-content {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(0, 168, 255, 0.5);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(0, 168, 255, 0.3);
+}
+
+.qr-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00a8ff;
+  text-shadow: 0 0 10px rgba(0, 168, 255, 0.6);
+  margin-bottom: 24px;
+}
+
+.qr-code-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  margin: 0 auto 24px;
+  width: fit-content;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.qr-instructions {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.qr-instructions p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.payment-status {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0, 168, 255, 0.1);
+  border: 1px solid rgba(0, 168, 255, 0.3);
+}
+
+.payment-status.success {
+  background: rgba(0, 255, 0, 0.1);
+  border-color: rgba(0, 255, 0, 0.3);
+}
+
+.payment-status.success p {
+  color: #00ff00;
+  font-weight: 600;
+}
+
+.payment-status.error {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.3);
+}
+
+.payment-status.error p {
+  color: #ff006e;
+  font-weight: 600;
+}
+
+.payment-status p {
+  color: #00a8ff;
+  font-size: 16px;
+  margin: 0;
+}
+
+.status-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 168, 255, 0.3);
+  border-top-color: #00a8ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .payment-qr-content {
+    padding: 24px;
+  }
+
+  .qr-title {
+    font-size: 18px;
+  }
+
+  .qr-code-wrapper {
+    padding: 16px;
+  }
+}

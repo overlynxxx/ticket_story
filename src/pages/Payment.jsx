@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Footer from '../components/Footer'
+import PaymentQR from '../components/PaymentQR'
+import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
 import './Payment.css'
 
 function Payment({ webApp, config }) {
@@ -10,6 +12,8 @@ function Payment({ webApp, config }) {
   const quantity = parseInt(searchParams.get('quantity') || '1')
   const [paymentMethod, setPaymentMethod] = useState('qr')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [paymentData, setPaymentData] = useState(null)
 
   // Находим мероприятие
   const event = eventId 
@@ -35,57 +39,71 @@ function Payment({ webApp, config }) {
   const handlePayment = async () => {
     if (isProcessing) return
 
+    // Если цена 0 (бесплатный билет), сразу выдаем билет
+    if (totalPrice === 0) {
+      const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const currentEventId = eventId || event?.id
+      navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
+      return
+    }
+
     setIsProcessing(true)
 
     try {
-      // ВАЖНО: В продакшене используйте реальный бэкенд API!
-      // Пример реального кода:
-      /*
-      const response = await fetch('https://your-api.com/api/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: totalPrice,
-          ticketCategory: categoryId,
-          quantity: quantity,
-          eventId: eventId || event.id,
-          userId: webApp?.initDataUnsafe?.user?.id || 'anonymous'
-        })
-      })
+      const currentEventId = eventId || event?.id
+      const userId = webApp?.initDataUnsafe?.user?.id || 'anonymous'
       
-      const data = await response.json()
+      // Создаем описание платежа
+      const description = `Билеты: ${event.name} - ${category.name} × ${quantity}`
       
-      if (data.success && paymentMethod === 'qr') {
-        // Открываем QR код для оплаты
-        if (data.qrCode) {
-          // Показываем QR код пользователю
-          // После оплаты проверяем статус через polling или webhook
-          const checkPaymentStatus = async () => {
-            const statusResponse = await fetch(`https://your-api.com/api/payment/${data.paymentId}/status`)
-            const statusData = await statusResponse.json()
-            
-            if (statusData.status === 'succeeded') {
-              navigate(`/ticket/${statusData.ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId || event.id}`)
-            } else {
-              setTimeout(checkPaymentStatus, 3000) // Проверяем каждые 3 секунды
-            }
-          }
-          checkPaymentStatus()
+      // Создаем платеж в ЮКассе используя реальные цены из конфига
+      const payment = await createYooKassaPayment(
+        totalPrice, // Используем реальную цену из конфига
+        description,
+        {
+          eventId: currentEventId,
+          categoryId: categoryId,
+          quantity: quantity.toString(),
+          userId: userId.toString(),
+          eventName: event.name
+        }
+      )
+
+      if (payment && paymentMethod === 'qr') {
+        // Получаем QR код или URL для оплаты
+        const qrCode = getPaymentQRCode(payment)
+        const paymentUrl = getPaymentUrl(payment) || qrCode
+
+        if (paymentUrl) {
+          setPaymentData({
+            paymentId: payment.id,
+            paymentUrl: paymentUrl,
+            amount: totalPrice
+          })
+          setShowQR(true)
+          setIsProcessing(false)
+        } else {
+          throw new Error('Не удалось получить QR код для оплаты')
         }
       }
-      */
-      
-      // ДЕМО РЕЖИМ: Симуляция успешной оплаты
-      const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      const currentEventId = eventId || event?.id
-      setTimeout(() => {
-        navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
-      }, 1500)
     } catch (error) {
       console.error('Ошибка оплаты:', error)
-      alert('Произошла ошибка при обработке платежа')
+      alert(`Произошла ошибка при обработке платежа: ${error.message}`)
       setIsProcessing(false)
     }
+  }
+
+  const handlePaymentSuccess = (payment) => {
+    // После успешной оплаты создаем билет
+    const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const currentEventId = eventId || event?.id
+    setShowQR(false)
+    navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
+  }
+
+  const handlePaymentCancel = () => {
+    setShowQR(false)
+    setIsProcessing(false)
   }
 
   if (!event) {
@@ -157,9 +175,19 @@ function Payment({ webApp, config }) {
       {isProcessing && (
         <div className="processing-overlay">
           <div className="processing-spinner"></div>
-          <p>Обработка платежа...</p>
+          <p>Создание платежа...</p>
         </div>
       )}
+
+      {showQR && paymentData && (
+        <PaymentQR
+          paymentUrl={paymentData.paymentUrl}
+          paymentId={paymentData.paymentId}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentCancel={handlePaymentCancel}
+        />
+      )}
+
       <Footer />
     </div>
   )
