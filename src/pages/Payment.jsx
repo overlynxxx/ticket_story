@@ -26,18 +26,6 @@ function Payment({ webApp, config }) {
   const category = event?.ticketCategories?.find(cat => cat.id === categoryId)
   const totalPrice = category ? category.price * quantity : 0
 
-  useEffect(() => {
-    if (webApp) {
-      webApp.MainButton.setText('Оплатить')
-      webApp.MainButton.show()
-      webApp.MainButton.onClick(handlePayment)
-      return () => {
-        webApp.MainButton.hide()
-        webApp.MainButton.offClick(handlePayment)
-      }
-    }
-  }, [webApp, paymentMethod])
-
   const handlePayment = async () => {
     if (isProcessing) return
 
@@ -117,6 +105,20 @@ function Payment({ webApp, config }) {
     setShowQR(false)
     setIsProcessing(false)
   }
+
+  // Настройка кнопки Telegram
+  useEffect(() => {
+    if (webApp) {
+      const buttonText = totalPrice === 0 ? 'Получить билет' : 'Оплатить'
+      webApp.MainButton.setText(buttonText)
+      webApp.MainButton.show()
+      webApp.MainButton.onClick(handlePayment)
+      return () => {
+        webApp.MainButton.hide()
+        webApp.MainButton.offClick(handlePayment)
+      }
+    }
+  }, [webApp, totalPrice, isProcessing])
 
   if (!event) {
     return (
