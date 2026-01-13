@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Footer from '../components/Footer'
 import PaymentQR from '../components/PaymentQR'
-import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
 import './Payment.css'
+
+// URL бэкенда (можно вынести в конфиг)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001'
 
 function Payment({ webApp, config }) {
   const { eventId, categoryId } = useParams()
@@ -53,30 +55,40 @@ function Payment({ webApp, config }) {
       const currentEventId = eventId || event?.id
       const userId = webApp?.initDataUnsafe?.user?.id || 'anonymous'
       
-      // Создаем описание платежа
-      const description = `Билеты: ${event.name} - ${category.name} × ${quantity}`
-      
-      // Создаем платеж в ЮКассе используя реальные цены из конфига
-      const payment = await createYooKassaPayment(
-        totalPrice, // Используем реальную цену из конфига
-        description,
-        {
+      // Создаем платеж через бэкенд API
+      const response = await fetch(`${API_URL}/api/create-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: totalPrice, // Используем реальную цену из конфига
           eventId: currentEventId,
           categoryId: categoryId,
-          quantity: quantity.toString(),
-          userId: userId.toString(),
-          eventName: event.name
-        }
-      )
+          quantity: quantity,
+          userId: userId
+        })
+      })
 
-      if (payment && paymentMethod === 'qr') {
-        // Получаем QR код или URL для оплаты
-        const qrCode = getPaymentQRCode(payment)
-        const paymentUrl = getPaymentUrl(payment) || qrCode
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Ошибка создания платежа')
+      }
+
+      // Если бесплатный билет
+      if (data.free && data.ticketId) {
+        navigate(`/ticket/${data.ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
+        return
+      }
+
+      // Для платных билетов показываем QR код
+      if (data.paymentId && paymentMethod === 'qr') {
+        const paymentUrl = data.qrCode || data.confirmationUrl
 
         if (paymentUrl) {
           setPaymentData({
-            paymentId: payment.id,
+            paymentId: data.paymentId,
             paymentUrl: paymentUrl,
             amount: totalPrice
           })
@@ -93,9 +105,9 @@ function Payment({ webApp, config }) {
     }
   }
 
-  const handlePaymentSuccess = (payment) => {
-    // После успешной оплаты создаем билет
-    const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const handlePaymentSuccess = (data) => {
+    // После успешной оплаты переходим к билету
+    const ticketId = data.ticketId || `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     const currentEventId = eventId || event?.id
     setShowQR(false)
     navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)

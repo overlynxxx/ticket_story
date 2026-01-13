@@ -6,32 +6,28 @@ function PaymentQR({ paymentUrl, paymentId, onPaymentSuccess, onPaymentCancel })
   const [paymentStatus, setPaymentStatus] = useState('pending')
   const [checking, setChecking] = useState(false)
 
-  // Проверка статуса платежа (для тестирования)
+  // URL бэкенда
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001'
+
+  // Проверка статуса платежа через бэкенд
   useEffect(() => {
     if (!paymentId || checking) return
 
     const checkStatus = async () => {
       setChecking(true)
       try {
-        // ВАЖНО: В продакшене это должно быть через ваш бэкенд!
-        const shopId = '1248098'
-        const secretKey = 'test_44nfjs8TvfyAWb77UlYIUU5kGUB28f-gITBPdKVyKpE'
-        
-        const response = await fetch(`https://api.yookassa.ru/v3/payments/${paymentId}`, {
-          headers: {
-            'Authorization': `Basic ${btoa(`${shopId}:${secretKey}`)}`
-          }
-        })
+        const response = await fetch(`${API_URL}/api/payment/${paymentId}/status`)
 
         if (response.ok) {
-          const payment = await response.json()
-          if (payment.status === 'succeeded') {
+          const data = await response.json()
+          
+          if (data.success && data.status === 'succeeded') {
             setPaymentStatus('succeeded')
             if (onPaymentSuccess) {
-              onPaymentSuccess(payment)
+              onPaymentSuccess({ ticketId: data.ticketId })
             }
             return
-          } else if (payment.status === 'canceled') {
+          } else if (data.status === 'canceled') {
             setPaymentStatus('canceled')
             if (onPaymentCancel) {
               onPaymentCancel()
@@ -51,7 +47,7 @@ function PaymentQR({ paymentUrl, paymentId, onPaymentSuccess, onPaymentCancel })
 
     const interval = setInterval(checkStatus, 3000)
     return () => clearInterval(interval)
-  }, [paymentId, checking, onPaymentSuccess, onPaymentCancel])
+  }, [paymentId, checking, onPaymentSuccess, onPaymentCancel, API_URL])
 
   return (
     <div className="payment-qr-container">
