@@ -6,52 +6,100 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  background-attachment: fixed;
 }
 
 .ticket-card-view {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, 
+    rgba(0, 168, 255, 0.15) 0%, 
+    rgba(255, 0, 110, 0.15) 50%,
+    rgba(0, 168, 255, 0.15) 100%);
+  border: 2px solid rgba(0, 168, 255, 0.5);
   border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 28px;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(0, 168, 255, 0.3),
+    inset 0 0 30px rgba(0, 168, 255, 0.1);
   color: white;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-card-view::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 168, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ticket-header-view {
   text-align: center;
   margin-bottom: 24px;
   padding-bottom: 24px;
-  border-bottom: 2px dashed rgba(255, 255, 255, 0.3);
+  border-bottom: 2px dashed rgba(0, 168, 255, 0.5);
+  position: relative;
+  z-index: 1;
 }
 
 .ticket-event-name {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 24px;
+  text-shadow: 
+    0 0 10px rgba(0, 168, 255, 0.8),
+    0 0 20px rgba(0, 168, 255, 0.4);
+  color: #00a8ff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .ticket-qr-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
-  background: white;
-  border-radius: 12px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
   margin: 0 auto;
   width: fit-content;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(0, 168, 255, 0.3);
+  border: 2px solid rgba(0, 168, 255, 0.5);
+  position: relative;
+  z-index: 1;
 }
 
 .ticket-details {
   margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(0, 168, 255, 0.3);
 }
 
 .detail-row:last-child {
@@ -60,8 +108,9 @@
 
 .detail-label {
   font-size: 14px;
-  opacity: 0.9;
+  opacity: 0.85;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .detail-value {
@@ -70,25 +119,39 @@
   text-align: right;
   flex: 1;
   margin-left: 16px;
+  color: #ffffff;
+}
+
+.detail-value:not(.ticket-id) {
+  color: #00a8ff;
+  text-shadow: 0 0 8px rgba(0, 168, 255, 0.5);
 }
 
 .ticket-id {
   font-family: 'Courier New', monospace;
-  font-size: 12px;
+  font-size: 11px;
   word-break: break-all;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 168, 255, 0.3);
 }
 
 .ticket-footer {
   padding-top: 20px;
-  border-top: 2px dashed rgba(255, 255, 255, 0.3);
+  border-top: 2px dashed rgba(0, 168, 255, 0.5);
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .ticket-note {
-  font-size: 12px;
-  opacity: 0.8;
-  line-height: 1.5;
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.6;
   margin: 0;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .error-container {
@@ -100,6 +163,13 @@
   justify-content: center;
   align-items: center;
   gap: 20px;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: #ffffff;
+}
+
+.error-container p {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Адаптивность */
@@ -114,18 +184,19 @@
   }
 
   .ticket-event-name {
-    font-size: 20px;
+    font-size: 22px;
+    letter-spacing: 1px;
   }
 
   .ticket-qr-container {
-    padding: 12px;
+    padding: 16px;
   }
 
   .detail-row {
-    padding: 10px 0;
+    padding: 12px 0;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
   }
 
   .detail-value {
@@ -135,14 +206,31 @@
   }
 
   .ticket-note {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 
 /* Печать билета */
 @media print {
+  .ticket-view-container {
+    background: white;
+  }
+
   .ticket-card-view {
     box-shadow: none;
+    border: 2px solid #000;
+    background: white;
+    color: #000;
     page-break-inside: avoid;
+  }
+
+  .ticket-event-name {
+    color: #000;
+    text-shadow: none;
+  }
+
+  .detail-value:not(.ticket-id) {
+    color: #000;
+    text-shadow: none;
   }
 }
