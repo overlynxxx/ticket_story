@@ -108,18 +108,22 @@ export default async function handler(req, res) {
     const returnUrl = process.env.RETURN_URL || 
                      (req.headers.origin ? `${req.headers.origin}/payment-success` : 'https://ticket-story.vercel.app/payment-success');
     
-    // Используем "Умный платеж" (Smart Payment) - ЮКасса сама предложит доступные способы оплаты
-    // Не указываем payment_method_data, чтобы ЮКасса автоматически выбрала доступные способы
-    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/smart-payment
+    // Оплата через СБП (Система быстрых платежей)
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/manual-integration/other/sbp
+    // Для СБП нужно:
+    // 1. payment_method_data с типом 'sbp'
+    // 2. confirmation с типом 'redirect' (не 'qr'!)
+    // 3. После создания платежа перенаправить пользователя на confirmation_url
     const payment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB',
       },
-      // Не указываем payment_method_data - используем Smart Payment
-      // ЮКасса автоматически предложит доступные способы оплаты (включая QR, если доступен)
+      payment_method_data: {
+        type: 'sbp' // Система быстрых платежей
+      },
       confirmation: {
-        type: 'redirect', // Используем redirect для Smart Payment
+        type: 'redirect', // Для СБП используется redirect, не qr!
         return_url: returnUrl,
       },
       capture: true, // Одностадийный платеж (сразу списываем деньги)
@@ -143,27 +147,27 @@ export default async function handler(req, res) {
       confirmationData: payment.confirmation?.confirmation_data
     });
 
-    // Для Smart Payment используем confirmation_url (URL для оплаты)
-    // Пользователь будет перенаправлен на страницу выбора способа оплаты
-    // Если в ответе есть confirmation_data (для QR), используем его
-    const qrCode = payment.confirmation?.confirmation_data || payment.confirmation?.confirmation_url;
+    // Для СБП используем confirmation_url - это ссылка на страницу ЮКассы с QR-кодом
+    // На странице ЮКассы пользователь увидит QR-код (на компьютере) или список банков (на мобильном)
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/manual-integration/other/sbp
+    const confirmationUrl = payment.confirmation?.confirmation_url;
 
-    // Проверяем, что получили данные для оплаты
-    if (!qrCode) {
-      console.error('No confirmation data in payment response:', payment);
+    // Проверяем, что получили URL для оплаты
+    if (!confirmationUrl) {
+      console.error('No confirmation URL in payment response:', payment);
       return res.status(500).json({
         success: false,
-        error: 'Не получены данные для оплаты от ЮКассы'
+        error: 'Не получен URL для оплаты от ЮКассы'
       });
     }
 
     res.json({
       success: true,
       paymentId: payment.id,
-      confirmationUrl: payment.confirmation?.confirmation_url,
-      qrCode: qrCode,
+      confirmationUrl: confirmationUrl, // URL страницы ЮКассы с QR-кодом СБП
       amount: amount,
-      status: payment.status // Добавляем статус для отладки
+      status: payment.status,
+      paymentMethod: payment.payment_method?.type // 'sbp'
     });
   } catch (error) {
     // Детальное логирование ошибки

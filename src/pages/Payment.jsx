@@ -94,45 +94,42 @@ function Payment({ webApp, config }) {
           return
         }
 
-        // Для платных билетов
-        if (data.paymentId) {
-          const paymentUrl = data.qrCode || data.confirmationUrl
-
-          console.log('Payment URL:', paymentUrl)
+        // Для платных билетов через СБП
+        if (data.paymentId && data.confirmationUrl) {
+          console.log('Payment URL for SBP:', data.confirmationUrl)
           console.log('Full payment data:', data)
 
-          if (paymentUrl) {
-            // Если есть confirmation_data (QR-код), показываем QR
-            // Если только confirmation_url (redirect), открываем страницу оплаты
-            if (data.qrCode && paymentMethod === 'qr') {
-              setPaymentData({
-                paymentId: data.paymentId,
-                paymentUrl: paymentUrl,
-                amount: totalPrice
-              })
-              setShowQR(true)
-              setIsProcessing(false)
-              return
-            } else if (data.confirmationUrl) {
-              // Открываем страницу оплаты ЮКассы в новом окне или редиректим
-              window.open(data.confirmationUrl, '_blank')
-              // Или можно использовать редирект:
-              // window.location.href = data.confirmationUrl
-              setIsProcessing(false)
-              // Показываем сообщение пользователю
-              alert('Откройте страницу оплаты и выберите способ оплаты. После оплаты вернитесь в приложение.')
-              return
-            } else {
-              console.error('No payment URL in response:', data)
-              throw new Error('Не получены данные для оплаты. Попробуйте позже.')
-            }
+          // Для СБП используем confirmation_url - это страница ЮКассы с QR-кодом
+          // На странице пользователь увидит QR-код (на компьютере) или список банков (на мобильном)
+          // В Telegram Mini App лучше открыть в браузере или использовать редирект
+          if (webApp) {
+            // В Telegram Mini App открываем страницу оплаты
+            webApp.openLink(data.confirmationUrl)
           } else {
-            console.error('No payment URL in response:', data)
-            throw new Error('Не получены данные для оплаты. Попробуйте позже.')
+            // В обычном браузере открываем в новом окне
+            window.open(data.confirmationUrl, '_blank')
           }
+
+          // Сохраняем данные платежа для проверки статуса
+          setPaymentData({
+            paymentId: data.paymentId,
+            paymentUrl: data.confirmationUrl,
+            amount: totalPrice
+          })
+
+          setIsProcessing(false)
+          
+          // Показываем сообщение пользователю
+          if (webApp) {
+            webApp.showAlert('Откройте страницу оплаты, отсканируйте QR-код или выберите банк. После оплаты вернитесь в приложение.')
+          } else {
+            alert('Откройте страницу оплаты, отсканируйте QR-код или выберите банк. После оплаты вернитесь в приложение.')
+          }
+          
+          return
         } else {
-          console.error('Missing paymentId:', data)
-          throw new Error('Неверный формат ответа от сервера')
+          console.error('Missing paymentId or confirmationUrl:', data)
+          throw new Error('Не получены данные для оплаты. Попробуйте позже.')
         }
 
         paymentData = data
