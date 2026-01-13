@@ -47,6 +47,10 @@ function Payment({ webApp, config }) {
       let useBackend = true
 
       try {
+        // Создаем AbortController для таймаута (совместимость с браузерами)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 секунд
+
         const response = await fetch(`${API_URL}/api/create-payment`, {
           method: 'POST',
           headers: {
@@ -59,15 +63,19 @@ function Payment({ webApp, config }) {
             quantity: quantity,
             userId: userId
           }),
-          // Таймаут 5 секунд
-          signal: AbortSignal.timeout(5000)
+          signal: controller.signal
         })
 
+        clearTimeout(timeoutId)
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
+          const errorData = await response.json().catch(() => ({}))
+          console.error('API Error:', response.status, errorData)
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
         }
 
         const data = await response.json()
+        console.log('Payment created:', data)
 
         if (!data.success) {
           throw new Error(data.error || 'Ошибка создания платежа')
@@ -83,6 +91,9 @@ function Payment({ webApp, config }) {
         if (data.paymentId && paymentMethod === 'qr') {
           const paymentUrl = data.qrCode || data.confirmationUrl
 
+          console.log('Payment URL for QR:', paymentUrl)
+          console.log('Full payment data:', data)
+
           if (paymentUrl) {
             setPaymentData({
               paymentId: data.paymentId,
@@ -92,63 +103,43 @@ function Payment({ webApp, config }) {
             setShowQR(true)
             setIsProcessing(false)
             return
+          } else {
+            console.error('No payment URL in response:', data)
+            throw new Error('Не получен QR-код для оплаты. Попробуйте позже.')
           }
+        } else {
+          console.error('Missing paymentId or wrong payment method:', { paymentId: data.paymentId, paymentMethod })
+          throw new Error('Неверный формат ответа от сервера')
         }
 
         paymentData = data
       } catch (backendError) {
-        console.warn('Бэкенд недоступен, используем прямую интеграцию:', backendError)
-        useBackend = false
+        console.error('Ошибка при создании платежа через бэкенд:', backendError)
         
-        // Fallback: прямая интеграция с ЮКассой (только для тестирования)
-        const description = `Билеты: ${event.name} - ${category.name} × ${quantity}`
-        const payment = await createYooKassaPayment(
-          totalPrice,
-          description,
-          {
-            eventId: currentEventId,
-            categoryId: categoryId,
-            quantity: quantity.toString(),
-            userId: userId.toString(),
-            eventName: event.name
-          }
-        )
-
-        if (payment && paymentMethod === 'qr') {
-          const qrCode = getPaymentQRCode(payment)
-          const paymentUrl = getPaymentUrl(payment) || qrCode
-
-          if (paymentUrl) {
-            setPaymentData({
-              paymentId: payment.id,
-              paymentUrl: paymentUrl,
-              amount: totalPrice,
-              useBackend: false // Флаг что используем прямую интеграцию
-            })
-            setShowQR(true)
-            setIsProcessing(false)
-            return
-          }
-        }
+        // Показываем ошибку пользователю
+        const errorMessage = backendError.message || 'Не удалось создать платеж. Попробуйте позже.'
+        alert(`Ошибка: ${errorMessage}`)
+        setIsProcessing(false)
+        return // Выходим из функции, не продолжаем выполнение
       }
 
+      // Если paymentData не установлен, это ошибка
       if (!paymentData) {
-        throw new Error('Не удалось создать платеж')
+        console.error('Payment data is missing after successful API call')
+        alert('Ошибка: Не удалось получить данные платежа')
+        setIsProcessing(false)
+        return
       }
     } catch (error) {
-      console.error('Ошибка оплаты:', error)
+      console.error('Критическая ошибка оплаты:', error)
       
       // Более понятное сообщение об ошибке
       let errorMessage = 'Произошла ошибка при обработке платежа'
       
-      if (error.name === 'AbortError' || error.message.includes('Failed to fetch')) {
-        // Если на Vercel, используем прямую интеграцию
-        if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('vercel.com')) {
-          console.log('Бэкенд недоступен, используем прямую интеграцию с ЮКассой')
-          // Продолжаем с прямой интеграцией (fallback уже обработан выше)
-          return
-        }
-        errorMessage = `Не удалось подключиться к серверу (${API_URL}). Убедитесь, что бэкенд запущен, или проверьте подключение к интернету.`
+      if (error.name === 'AbortError') {
+        errorMessage = 'Превышено время ожидания ответа от сервера. Проверьте подключение к интернету и попробуйте снова.'
+      } else if (error.message && error.message.includes('Failed to fetch')) {
+        errorMessage = `Не удалось подключиться к серверу. Проверьте подключение к интернету или попробуйте позже.`
       } else if (error.message) {
         errorMessage = error.message
       }

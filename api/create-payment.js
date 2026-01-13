@@ -98,11 +98,23 @@ export default async function handler(req, res) {
       },
     }, idempotenceKey);
 
+    // Логируем ответ от ЮКассы для отладки
+    console.log('YooKassa payment response:', {
+      id: payment.id,
+      status: payment.status,
+      confirmation: payment.confirmation,
+      confirmationUrl: payment.confirmation?.confirmation_url,
+      confirmationData: payment.confirmation?.confirmation_data
+    });
+
+    // Для QR-кода используем confirmation_url или confirmation_data
+    const qrCode = payment.confirmation?.confirmation_url || payment.confirmation?.confirmation_data;
+
     res.json({
       success: true,
       paymentId: payment.id,
       confirmationUrl: payment.confirmation?.confirmation_url,
-      qrCode: payment.confirmation?.confirmation_data,
+      qrCode: qrCode,
       amount: amount
     });
   } catch (error) {
