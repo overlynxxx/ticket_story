@@ -95,27 +95,43 @@ function Payment({ webApp, config }) {
         }
 
         // Для платных билетов
-        if (data.paymentId && paymentMethod === 'qr') {
+        if (data.paymentId) {
           const paymentUrl = data.qrCode || data.confirmationUrl
 
-          console.log('Payment URL for QR:', paymentUrl)
+          console.log('Payment URL:', paymentUrl)
           console.log('Full payment data:', data)
 
           if (paymentUrl) {
-            setPaymentData({
-              paymentId: data.paymentId,
-              paymentUrl: paymentUrl,
-              amount: totalPrice
-            })
-            setShowQR(true)
-            setIsProcessing(false)
-            return
+            // Если есть confirmation_data (QR-код), показываем QR
+            // Если только confirmation_url (redirect), открываем страницу оплаты
+            if (data.qrCode && paymentMethod === 'qr') {
+              setPaymentData({
+                paymentId: data.paymentId,
+                paymentUrl: paymentUrl,
+                amount: totalPrice
+              })
+              setShowQR(true)
+              setIsProcessing(false)
+              return
+            } else if (data.confirmationUrl) {
+              // Открываем страницу оплаты ЮКассы в новом окне или редиректим
+              window.open(data.confirmationUrl, '_blank')
+              // Или можно использовать редирект:
+              // window.location.href = data.confirmationUrl
+              setIsProcessing(false)
+              // Показываем сообщение пользователю
+              alert('Откройте страницу оплаты и выберите способ оплаты. После оплаты вернитесь в приложение.')
+              return
+            } else {
+              console.error('No payment URL in response:', data)
+              throw new Error('Не получены данные для оплаты. Попробуйте позже.')
+            }
           } else {
             console.error('No payment URL in response:', data)
-            throw new Error('Не получен QR-код для оплаты. Попробуйте позже.')
+            throw new Error('Не получены данные для оплаты. Попробуйте позже.')
           }
         } else {
-          console.error('Missing paymentId or wrong payment method:', { paymentId: data.paymentId, paymentMethod })
+          console.error('Missing paymentId:', data)
           throw new Error('Неверный формат ответа от сервера')
         }
 

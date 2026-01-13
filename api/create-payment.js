@@ -108,18 +108,18 @@ export default async function handler(req, res) {
     const returnUrl = process.env.RETURN_URL || 
                      (req.headers.origin ? `${req.headers.origin}/payment-success` : 'https://ticket-story.vercel.app/payment-success');
     
-    // Для QR-кода через СБП нужно указать payment_method_data
-    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
+    // Используем "Умный платеж" (Smart Payment) - ЮКасса сама предложит доступные способы оплаты
+    // Не указываем payment_method_data, чтобы ЮКасса автоматически выбрала доступные способы
+    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/smart-payment
     const payment = await checkout.createPayment({
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB',
       },
-      payment_method_data: {
-        type: 'sbp' // Система быстрых платежей (СБП) для QR-кода
-      },
+      // Не указываем payment_method_data - используем Smart Payment
+      // ЮКасса автоматически предложит доступные способы оплаты (включая QR, если доступен)
       confirmation: {
-        type: 'qr',
+        type: 'redirect', // Используем redirect для Smart Payment
         return_url: returnUrl,
       },
       capture: true, // Одностадийный платеж (сразу списываем деньги)
@@ -143,17 +143,17 @@ export default async function handler(req, res) {
       confirmationData: payment.confirmation?.confirmation_data
     });
 
-    // Для QR-кода используем confirmation_data (строка с данными для QR)
-    // Если его нет, используем confirmation_url (URL для оплаты)
-    // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
+    // Для Smart Payment используем confirmation_url (URL для оплаты)
+    // Пользователь будет перенаправлен на страницу выбора способа оплаты
+    // Если в ответе есть confirmation_data (для QR), используем его
     const qrCode = payment.confirmation?.confirmation_data || payment.confirmation?.confirmation_url;
 
-    // Проверяем, что получили данные для QR-кода
+    // Проверяем, что получили данные для оплаты
     if (!qrCode) {
-      console.error('No QR code data in payment response:', payment);
+      console.error('No confirmation data in payment response:', payment);
       return res.status(500).json({
         success: false,
-        error: 'Не получены данные для QR-кода от ЮКассы'
+        error: 'Не получены данные для оплаты от ЮКассы'
       });
     }
 
