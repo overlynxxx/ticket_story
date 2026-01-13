@@ -8,31 +8,64 @@ function PaymentQR({ paymentUrl, paymentId, onPaymentSuccess, onPaymentCancel })
 
   // URL бэкенда
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001'
+  const useBackend = paymentData && paymentData.useBackend !== false
 
-  // Проверка статуса платежа через бэкенд
+  // Проверка статуса платежа
   useEffect(() => {
     if (!paymentId || checking) return
 
     const checkStatus = async () => {
       setChecking(true)
       try {
-        const response = await fetch(`${API_URL}/api/payment/${paymentId}/status`)
+        // Если используем бэкенд
+        if (useBackend) {
+          const response = await fetch(`${API_URL}/api/payment/${paymentId}/status`)
 
-        if (response.ok) {
-          const data = await response.json()
+          if (response.ok) {
+            const data = await response.json()
+            
+            if (data.success && data.status === 'succeeded') {
+              setPaymentStatus('succeeded')
+              if (onPaymentSuccess) {
+                onPaymentSuccess({ ticketId: data.ticketId })
+              }
+              return
+            } else if (data.status === 'canceled') {
+              setPaymentStatus('canceled')
+              if (onPaymentCancel) {
+                onPaymentCancel()
+              }
+              return
+            }
+          }
+        } else {
+          // Прямая проверка через API ЮКассы (только для тестирования)
+          const shopId = '1248098'
+          const secretKey = 'test_44nfjs8TvfyAWb77UlYIUU5kGUB28f-gITBPdKVyKpE'
           
-          if (data.success && data.status === 'succeeded') {
-            setPaymentStatus('succeeded')
-            if (onPaymentSuccess) {
-              onPaymentSuccess({ ticketId: data.ticketId })
+          const response = await fetch(`https://api.yookassa.ru/v3/payments/${paymentId}`, {
+            headers: {
+              'Authorization': `Basic ${btoa(`${shopId}:${secretKey}`)}`
             }
-            return
-          } else if (data.status === 'canceled') {
-            setPaymentStatus('canceled')
-            if (onPaymentCancel) {
-              onPaymentCancel()
+          })
+
+          if (response.ok) {
+            const payment = await response.json()
+            if (payment.status === 'succeeded') {
+              setPaymentStatus('succeeded')
+              if (onPaymentSuccess) {
+                // Создаем билет локально (для демо)
+                const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                onPaymentSuccess({ ticketId })
+              }
+              return
+            } else if (payment.status === 'canceled') {
+              setPaymentStatus('canceled')
+              if (onPaymentCancel) {
+                onPaymentCancel()
+              }
+              return
             }
-            return
           }
         }
       } catch (error) {
@@ -47,7 +80,7 @@ function PaymentQR({ paymentUrl, paymentId, onPaymentSuccess, onPaymentCancel })
 
     const interval = setInterval(checkStatus, 3000)
     return () => clearInterval(interval)
-  }, [paymentId, checking, onPaymentSuccess, onPaymentCancel, API_URL])
+  }, [paymentId, checking, onPaymentSuccess, onPaymentCancel, API_URL, useBackend])
 
   return (
     <div className="payment-qr-container">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Footer from '../components/Footer'
 import PaymentQR from '../components/PaymentQR'
+import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
 import './Payment.css'
 
 // URL бэкенда (можно вынести в конфиг)
@@ -43,52 +44,112 @@ function Payment({ webApp, config }) {
       const currentEventId = eventId || event?.id
       const userId = webApp?.initDataUnsafe?.user?.id || 'anonymous'
       
-      // Создаем платеж через бэкенд API
-      const response = await fetch(`${API_URL}/api/create-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          amount: totalPrice, // Используем реальную цену из конфига
-          eventId: currentEventId,
-          categoryId: categoryId,
-          quantity: quantity,
-          userId: userId
+      // Пытаемся создать платеж через бэкенд API
+      let paymentData = null
+      let useBackend = true
+
+      try {
+        const response = await fetch(`${API_URL}/api/create-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amount: totalPrice,
+            eventId: currentEventId,
+            categoryId: categoryId,
+            quantity: quantity,
+            userId: userId
+          }),
+          // Таймаут 5 секунд
+          signal: AbortSignal.timeout(5000)
         })
-      })
 
-      const data = await response.json()
-
-      if (!data.success) {
-        throw new Error(data.error || 'Ошибка создания платежа')
-      }
-
-      // Если бесплатный билет
-      if (data.free && data.ticketId) {
-        navigate(`/ticket/${data.ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
-        return
-      }
-
-      // Для платных билетов показываем QR код
-      if (data.paymentId && paymentMethod === 'qr') {
-        const paymentUrl = data.qrCode || data.confirmationUrl
-
-        if (paymentUrl) {
-          setPaymentData({
-            paymentId: data.paymentId,
-            paymentUrl: paymentUrl,
-            amount: totalPrice
-          })
-          setShowQR(true)
-          setIsProcessing(false)
-        } else {
-          throw new Error('Не удалось получить QR код для оплаты')
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
         }
+
+        const data = await response.json()
+
+        if (!data.success) {
+          throw new Error(data.error || 'Ошибка создания платежа')
+        }
+
+        // Если бесплатный билет
+        if (data.free && data.ticketId) {
+          navigate(`/ticket/${data.ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
+          return
+        }
+
+        // Для платных билетов
+        if (data.paymentId && paymentMethod === 'qr') {
+          const paymentUrl = data.qrCode || data.confirmationUrl
+
+          if (paymentUrl) {
+            setPaymentData({
+              paymentId: data.paymentId,
+              paymentUrl: paymentUrl,
+              amount: totalPrice
+            })
+            setShowQR(true)
+            setIsProcessing(false)
+            return
+          }
+        }
+
+        paymentData = data
+      } catch (backendError) {
+        console.warn('Бэкенд недоступен, используем прямую интеграцию:', backendError)
+        useBackend = false
+        
+        // Fallback: прямая интеграция с ЮКассой (только для тестирования)
+        const description = `Билеты: ${event.name} - ${category.name} × ${quantity}`
+        const payment = await createYooKassaPayment(
+          totalPrice,
+          description,
+          {
+            eventId: currentEventId,
+            categoryId: categoryId,
+            quantity: quantity.toString(),
+            userId: userId.toString(),
+            eventName: event.name
+          }
+        )
+
+        if (payment && paymentMethod === 'qr') {
+          const qrCode = getPaymentQRCode(payment)
+          const paymentUrl = getPaymentUrl(payment) || qrCode
+
+          if (paymentUrl) {
+            setPaymentData({
+              paymentId: payment.id,
+              paymentUrl: paymentUrl,
+              amount: totalPrice,
+              useBackend: false // Флаг что используем прямую интеграцию
+            })
+            setShowQR(true)
+            setIsProcessing(false)
+            return
+          }
+        }
+      }
+
+      if (!paymentData) {
+        throw new Error('Не удалось создать платеж')
       }
     } catch (error) {
       console.error('Ошибка оплаты:', error)
-      alert(`Произошла ошибка при обработке платежа: ${error.message}`)
+      
+      // Более понятное сообщение об ошибке
+      let errorMessage = 'Произошла ошибка при обработке платежа'
+      
+      if (error.name === 'AbortError' || error.message.includes('Failed to fetch')) {
+        errorMessage = 'Не удалось подключиться к серверу. Убедитесь, что бэкенд запущен на порту 3001, или проверьте подключение к интернету.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      alert(errorMessage)
       setIsProcessing(false)
     }
   }
@@ -206,6 +267,7 @@ function Payment({ webApp, config }) {
         <PaymentQR
           paymentUrl={paymentData.paymentUrl}
           paymentId={paymentData.paymentId}
+          paymentData={paymentData}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentCancel={handlePaymentCancel}
         />
