@@ -12,22 +12,30 @@ function PaymentSuccess({ webApp, config }) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!paymentId) {
-      setError('Не найден ID платежа')
+    // Получаем payment_id из URL (ЮКасса добавляет его в query параметры)
+    const urlPaymentId = searchParams.get('payment_id') || 
+                        searchParams.get('paymentId') || 
+                        window.location.search.match(/payment[_-]?id=([^&]+)/)?.[1]
+    
+    if (!urlPaymentId && !paymentId) {
+      setError('Не найден ID платежа в URL')
       setLoading(false)
       return
     }
 
+    const actualPaymentId = urlPaymentId || paymentId
+
     // Проверяем статус платежа
     const checkPaymentStatus = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/payment/${paymentId}/status`)
+        const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
         
         if (!response.ok) {
           throw new Error('Не удалось проверить статус платежа')
         }
 
         const data = await response.json()
+        console.log('Payment status check:', data)
         
         if (data.success && data.status === 'succeeded') {
           setPaymentStatus('succeeded')
@@ -50,13 +58,22 @@ function PaymentSuccess({ webApp, config }) {
           
           // Перенаправляем на страницу билетов
           const firstTicketId = ticketIds[0]
-          navigate(`/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId}&tickets=${ticketIds.join(',')}`)
+          navigate(`/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId}&tickets=${ticketIds.join(',')}`, { replace: true })
         } else if (data.status === 'canceled') {
           setPaymentStatus('canceled')
         } else {
           setPaymentStatus('pending')
-          // Повторяем проверку через 2 секунды
-          setTimeout(checkPaymentStatus, 2000)
+          // Повторяем проверку через 2 секунды (максимум 10 попыток)
+          const attempts = parseInt(searchParams.get('attempts') || '0')
+          if (attempts < 10) {
+            setTimeout(() => {
+              const newSearchParams = new URLSearchParams(searchParams)
+              newSearchParams.set('attempts', (attempts + 1).toString())
+              window.location.search = newSearchParams.toString()
+            }, 2000)
+          } else {
+            setError('Превышено время ожидания подтверждения платежа')
+          }
         }
       } catch (err) {
         console.error('Ошибка проверки платежа:', err)

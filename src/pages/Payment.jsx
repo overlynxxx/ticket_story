@@ -101,14 +101,8 @@ function Payment({ webApp, config }) {
 
           // Для СБП используем confirmation_url - это страница ЮКассы с QR-кодом
           // На странице пользователь увидит QR-код (на компьютере) или список банков (на мобильном)
-          // В Telegram Mini App лучше открыть в браузере или использовать редирект
-          if (webApp) {
-            // В Telegram Mini App открываем страницу оплаты
-            webApp.openLink(data.confirmationUrl)
-          } else {
-            // В обычном браузере открываем в новом окне
-            window.open(data.confirmationUrl, '_blank')
-          }
+          // Используем window.location.href для редиректа (работает везде)
+          window.location.href = data.confirmationUrl
 
           // Сохраняем данные платежа для проверки статуса
           setPaymentData({
