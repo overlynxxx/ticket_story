@@ -13,14 +13,18 @@ function App() {
 
   useEffect(() => {
     // Инициализация Telegram Web App
-    if (window.Telegram?.WebApp) {
+    // Проверяем, что мы действительно в Telegram Mini App (есть initData)
+    if (window.Telegram?.WebApp && window.Telegram.WebApp.initData) {
       const tg = window.Telegram.WebApp
       tg.ready()
       tg.expand()
       setWebApp(tg)
     } else {
       // Для разработки вне Telegram
-      console.log('Telegram WebApp не обнаружен, работаем в режиме разработки')
+      setWebApp(null)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Telegram WebApp не обнаружен, работаем в режиме разработки')
+      }
     }
   }, [])
 
