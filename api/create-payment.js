@@ -70,9 +70,34 @@ export default async function handler(req, res) {
     }
 
     // Инициализация ЮКассы
+    const shopId = process.env.YOOKASSA_SHOP_ID || eventsConfig.yookassa?.shopId;
+    const secretKey = process.env.YOOKASSA_SECRET_KEY || eventsConfig.yookassa?.secretKey;
+
+    // Проверяем наличие ключей
+    if (!shopId || !secretKey) {
+      console.error('YooKassa credentials missing:', { 
+        hasShopId: !!shopId, 
+        hasSecretKey: !!secretKey,
+        envShopId: !!process.env.YOOKASSA_SHOP_ID,
+        envSecretKey: !!process.env.YOOKASSA_SECRET_KEY
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'Не настроены ключи ЮКассы. Проверьте переменные окружения YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY'
+      });
+    }
+
+    console.log('Creating payment with:', {
+      shopId: shopId.substring(0, 4) + '...',
+      amount,
+      eventId,
+      categoryId,
+      quantity
+    });
+
     const checkout = new YooCheckout({
-      shopId: process.env.YOOKASSA_SHOP_ID || eventsConfig.yookassa?.shopId,
-      secretKey: process.env.YOOKASSA_SECRET_KEY || eventsConfig.yookassa?.secretKey,
+      shopId: shopId,
+      secretKey: secretKey,
     });
 
     // Создаем платеж в ЮКассе
@@ -118,10 +143,51 @@ export default async function handler(req, res) {
       amount: amount
     });
   } catch (error) {
-    console.error('Ошибка создания платежа:', error);
-    res.status(500).json({
+    // Детальное логирование ошибки
+    console.error('Ошибка создания платежа:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      response: error.response?.data || error.response,
+      status: error.response?.status,
+      code: error.code
+    });
+
+    // Обработка специфичных ошибок ЮКассы
+    let errorMessage = 'Ошибка создания платежа';
+    let statusCode = 500;
+
+    if (error.response) {
+      // Ошибка от API ЮКассы
+      const yooError = error.response.data || error.response;
+      statusCode = error.response.status || 500;
+      
+      if (yooError.description) {
+        errorMessage = `Ошибка ЮКассы: ${yooError.description}`;
+      } else if (yooError.message) {
+        errorMessage = `Ошибка ЮКассы: ${yooError.message}`;
+      } else if (typeof yooError === 'string') {
+        errorMessage = `Ошибка ЮКассы: ${yooError}`;
+      } else {
+        errorMessage = `Ошибка ЮКассы (код ${statusCode})`;
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    // Специальные случаи
+    if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+      errorMessage = 'Неверные ключи доступа к ЮКассе. Проверьте YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY';
+    } else if (error.message?.includes('403') || error.message?.includes('Forbidden')) {
+      errorMessage = 'Доступ запрещен. Проверьте права доступа к магазину ЮКассы';
+    } else if (error.message?.includes('Network') || error.message?.includes('ECONNREFUSED')) {
+      errorMessage = 'Не удалось подключиться к серверу ЮКассы. Проверьте подключение к интернету';
+    }
+
+    res.status(statusCode).json({
       success: false,
-      error: error.message || 'Ошибка создания платежа'
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }

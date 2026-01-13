@@ -70,8 +70,15 @@ function Payment({ webApp, config }) {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
-          console.error('API Error:', response.status, errorData)
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+          console.error('API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData
+          })
+          
+          // Более понятное сообщение об ошибке
+          const errorMessage = errorData.error || errorData.message || `Ошибка сервера (${response.status})`
+          throw new Error(errorMessage)
         }
 
         const data = await response.json()
