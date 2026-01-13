@@ -15,8 +15,13 @@ function Home({ webApp, config }) {
     <div className="home-container">
       {/* Афиша */}
       <div className="poster-container">
-        <div className="poster-image">
-          {/* Здесь будет изображение афиши - можно добавить через <img> или background-image */}
+        <div 
+          className="poster-image"
+          style={{
+            // Раскомментируйте следующую строку и укажите путь к вашему изображению:
+            // backgroundImage: 'url(/poster.jpg)',
+          }}
+        >
           <div className="poster-overlay">
             <div className="poster-content">
               <div className="poster-label">КОНЦЕРТ</div>
