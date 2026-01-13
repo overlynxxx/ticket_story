@@ -1,0 +1,53 @@
+.app-footer {
+  width: 100%;
+  padding: 20px;
+  margin-top: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(0, 168, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.footer-content {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-inn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.footer-label {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-value {
+  font-weight: 600;
+  color: #00a8ff;
+  text-shadow: 0 0 8px rgba(0, 168, 255, 0.4);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .app-footer {
+    padding: 16px;
+  }
+
+  .footer-inn {
+    font-size: 12px;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .footer-value {
+    font-size: 14px;
+  }
+}

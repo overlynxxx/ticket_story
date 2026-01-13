@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import Footer from '../components/Footer'
 import './Payment.css'
 
 function Payment({ webApp, config }) {
@@ -137,6 +138,7 @@ function Payment({ webApp, config }) {
           <p>Обработка платежа...</p>
         </div>
       )}
+      <Footer />
     </div>
   )
 }

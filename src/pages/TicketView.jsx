@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
+import Footer from '../components/Footer'
 import './TicketView.css'
 
 function TicketView({ webApp, config }) {
@@ -42,6 +43,7 @@ function TicketView({ webApp, config }) {
     return (
       <div className="error-container">
         <p>Билет не найден</p>
+        <Footer />
       </div>
     )
   }
@@ -106,6 +108,7 @@ function TicketView({ webApp, config }) {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

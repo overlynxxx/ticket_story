@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Footer from '../components/Footer'
 import './Home.css'
 
 function Home({ webApp, config }) {
@@ -99,6 +100,7 @@ function Home({ webApp, config }) {
           ))}
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
