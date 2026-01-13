@@ -62,8 +62,16 @@ function PaymentSuccess({ webApp, config }) {
 
   const checkPaymentAndRedirect = async (actualPaymentId) => {
     try {
-      console.log('Checking payment status for:', actualPaymentId)
+      console.log('Checking payment status for:', actualPaymentId, 'API_URL:', API_URL)
       const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
+      
+      // Проверяем Content-Type перед парсингом JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response:', text.substring(0, 200))
+        throw new Error(`Сервер вернул неверный формат ответа. Проверьте, что API работает корректно.`)
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))

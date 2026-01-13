@@ -20,6 +20,13 @@ function PaymentQR({ paymentUrl, paymentId, paymentData, onPaymentSuccess, onPay
         if (useBackend) {
           const response = await fetch(`${API_URL}/api/payment/${paymentId}/status`)
 
+          // Проверяем Content-Type перед парсингом JSON
+          const contentType = response.headers.get('content-type')
+          if (!contentType || !contentType.includes('application/json')) {
+            console.error('Non-JSON response from payment status:', await response.text().catch(() => 'Cannot read response'))
+            return // Пропускаем эту проверку, попробуем позже
+          }
+
           if (response.ok) {
             const data = await response.json()
             

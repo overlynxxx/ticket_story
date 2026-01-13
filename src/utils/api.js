@@ -13,15 +13,17 @@ export function getApiUrl() {
   // Если приложение задеплоено на Vercel, используем тот же домен
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
+    const origin = window.location.origin
     
-    // Если на Vercel домене
+    // Если на Vercel домене или в продакшене
     if (hostname.includes('vercel.app') || hostname.includes('vercel.com')) {
-      return `https://${hostname}`
+      // Используем пустую строку для относительных путей (API на том же домене)
+      return ''
     }
     
     // Если на кастомном домене (предполагаем, что API на том же домене)
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return window.location.origin
+      return '' // Относительные пути работают лучше
     }
   }
 

@@ -51,6 +51,7 @@ function Payment({ webApp, config }) {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 секунд
 
+        console.log('Creating payment, API_URL:', API_URL)
         const response = await fetch(`${API_URL}/api/create-payment`, {
           method: 'POST',
           headers: {
@@ -67,6 +68,14 @@ function Payment({ webApp, config }) {
         })
 
         clearTimeout(timeoutId)
+
+        // Проверяем Content-Type перед парсингом JSON
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text()
+          console.error('Non-JSON response from create-payment:', text.substring(0, 200))
+          throw new Error(`Сервер вернул неверный формат ответа. URL: ${API_URL}/api/create-payment`)
+        }
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
