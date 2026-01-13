@@ -5,6 +5,7 @@ import { join } from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+    res.setHeader('Content-Type', 'application/json');
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
@@ -13,6 +14,7 @@ export default async function handler(req, res) {
 
     // Валидация
     if (!amount || !eventId || !categoryId || !quantity) {
+      res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({
         success: false,
         error: 'Недостаточно данных для создания платежа'
@@ -27,6 +29,7 @@ export default async function handler(req, res) {
       eventsConfig = JSON.parse(configData);
     } catch (error) {
       console.error('Ошибка загрузки конфига:', error);
+      res.setHeader('Content-Type', 'application/json');
       return res.status(500).json({
         success: false,
         error: 'Ошибка загрузки конфигурации'
@@ -36,6 +39,7 @@ export default async function handler(req, res) {
     // Находим мероприятие и категорию
     const event = eventsConfig.events?.find(e => e.id === eventId);
     if (!event) {
+      res.setHeader('Content-Type', 'application/json');
       return res.status(404).json({
         success: false,
         error: 'Мероприятие не найдено'
@@ -44,6 +48,7 @@ export default async function handler(req, res) {
 
     const category = event.ticketCategories?.find(c => c.id === categoryId);
     if (!category) {
+      res.setHeader('Content-Type', 'application/json');
       return res.status(404).json({
         success: false,
         error: 'Категория билетов не найдена'
@@ -53,6 +58,7 @@ export default async function handler(req, res) {
     // Проверяем цену
     const expectedPrice = category.price * quantity;
     if (Math.abs(amount - expectedPrice) > 0.01) {
+      res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({
         success: false,
         error: 'Неверная сумма платежа'
@@ -62,7 +68,8 @@ export default async function handler(req, res) {
     // Если цена 0, сразу создаем билет
     if (amount === 0) {
       const ticketId = `TICKET-${Date.now()}-${uuidv4().substr(0, 8)}`;
-      return res.json({
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).json({
         success: true,
         ticketId: ticketId,
         free: true
@@ -81,6 +88,7 @@ export default async function handler(req, res) {
         envShopId: !!process.env.YOOKASSA_SHOP_ID,
         envSecretKey: !!process.env.YOOKASSA_SECRET_KEY
       });
+      res.setHeader('Content-Type', 'application/json');
       return res.status(500).json({
         success: false,
         error: 'Не настроены ключи ЮКассы. Проверьте переменные окружения YOOKASSA_SHOP_ID и YOOKASSA_SECRET_KEY'
@@ -157,13 +165,16 @@ export default async function handler(req, res) {
     // Проверяем, что получили URL для оплаты
     if (!confirmationUrl) {
       console.error('No confirmation URL in payment response:', payment);
+      res.setHeader('Content-Type', 'application/json');
       return res.status(500).json({
         success: false,
         error: 'Не получен URL для оплаты от ЮКассы'
       });
     }
 
-    res.json({
+    // Явно устанавливаем Content-Type для корректной обработки на фронтенде
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json({
       success: true,
       paymentId: payment.id,
       confirmationUrl: confirmationUrl, // URL страницы ЮКассы с QR-кодом СБП
@@ -213,6 +224,7 @@ export default async function handler(req, res) {
       errorMessage = 'Не удалось подключиться к серверу ЮКассы. Проверьте подключение к интернету';
     }
 
+    res.setHeader('Content-Type', 'application/json');
     res.status(statusCode).json({
       success: false,
       error: errorMessage,
