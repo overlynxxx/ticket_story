@@ -104,9 +104,10 @@ export default async function handler(req, res) {
     // Согласно документации: https://yookassa.ru/developers/payment-acceptance/getting-started/payment-process
     const idempotenceKey = uuidv4();
     
-    // Формируем return_url
+    // Формируем return_url - после оплаты пользователь вернется на эту страницу
+    // На странице payment-success будет проверен статус платежа и созданы билеты
     const returnUrl = process.env.RETURN_URL || 
-                     (req.headers.origin ? `${req.headers.origin}/payment-success` : 'https://ticket-story.vercel.app/payment-success');
+                     (req.headers.origin ? `${req.headers.origin}/payment-success?payment_id={PAYMENT_ID}` : 'https://ticket-story.vercel.app/payment-success?payment_id={PAYMENT_ID}');
     
     // Оплата через СБП (Система быстрых платежей)
     // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/manual-integration/other/sbp
