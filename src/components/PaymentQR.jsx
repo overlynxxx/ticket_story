@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import './PaymentQR.css'
 
-function PaymentQR({ paymentUrl, paymentId, onPaymentSuccess, onPaymentCancel }) {
+function PaymentQR({ paymentUrl, paymentId, paymentData, onPaymentSuccess, onPaymentCancel }) {
   const [paymentStatus, setPaymentStatus] = useState('pending')
   const [checking, setChecking] = useState(false)
 
