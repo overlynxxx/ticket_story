@@ -172,6 +172,7 @@ export default async function handler(req, res) {
         quantity: quantity.toString(),
         userId: userId || 'anonymous',
         email: email.trim(),
+        sendEmail: 'true', // Сохраняем согласие на отправку email (всегда true, так как это обязательное поле)
         eventName: event.name,
         categoryName: category.name
       },
