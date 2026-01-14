@@ -17,14 +17,18 @@ function PaymentSuccess({ webApp, config }) {
     const urlPaymentId = urlParams.get('payment_id') || 
                         urlParams.get('paymentId') || 
                         urlParams.get('orderId') ||
+                        urlParams.get('payment_id') || // Дублируем для надежности
                         window.location.hash.match(/payment[_-]?id=([^&]+)/)?.[1] ||
                         window.location.search.match(/payment[_-]?id=([^&]+)/)?.[1]
     
-    console.log('PaymentSuccess - URL params:', {
+    console.log('[PaymentSuccess] Page loaded:', {
+      fullUrl: window.location.href,
+      pathname: window.location.pathname,
       search: window.location.search,
       hash: window.location.hash,
       urlPaymentId,
-      allParams: Object.fromEntries(urlParams)
+      allParams: Object.fromEntries(urlParams),
+      timestamp: new Date().toISOString()
     })
 
     if (!urlPaymentId && !paymentId) {
