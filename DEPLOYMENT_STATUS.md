@@ -1,7 +1,7 @@
 # ✅ Статус деплоя
 
 ## 🌐 URL проекта:
-**https://ticket-story.vercel.app**
+**https://tupik.xyz**
 
 ## ✅ Что работает:
 
@@ -23,22 +23,22 @@
 ### Проверка API:
 ```bash
 # Health check
-curl https://ticket-story.vercel.app/api/health
+curl https://tupik.xyz/api/health
 
 # Список мероприятий
-curl https://ticket-story.vercel.app/api/events
+curl https://tupik.xyz/api/events
 ```
 
 ### Telegram Bot:
 1. Откройте [@BotFather](https://t.me/BotFather)
 2. Команда: `/newapp`
 3. Выберите вашего бота
-4. URL: `https://ticket-story.vercel.app`
+4. URL: `https://tupik.xyz`
 
 ### Webhook ЮКассы:
 1. Зайдите в [личный кабинет ЮКассы](https://yookassa.ru/my)
 2. Настройки магазина → Webhook
-3. URL: `https://ticket-story.vercel.app/api/payment-webhook`
+3. URL: `https://tupik.xyz/api/payment-webhook`
 4. События: `payment.succeeded`, `payment.canceled`
 
 ## 🔄 Автоматический деплой:
