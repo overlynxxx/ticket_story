@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { YooCheckout } from '@a2seven/yoo-checkout';
 
 // Функция для отправки информационного чека через Resend
 async function sendReceiptViaResend(payment, event, category, requestId) {
@@ -211,7 +212,6 @@ export default async function handler(req, res) {
     }
 
     // Получаем информацию о платеже из ЮКассы
-    const { YooCheckout } = await import('@a2seven/yoo-checkout');
     const shopId = process.env.YOOKASSA_SHOP_ID || eventsConfig.yookassa?.shopId;
     const secretKey = process.env.YOOKASSA_SECRET_KEY || eventsConfig.yookassa?.secretKey;
 
