@@ -86,7 +86,7 @@ export default async function handler(req, res) {
       from: EMAIL_FROM,
       to: email,
       subject: `Билет на мероприятие: ${event.name}`,
-        html: `
+      html: `
           <!DOCTYPE html>
           <html>
           <head>

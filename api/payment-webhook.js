@@ -114,52 +114,7 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${RESEND_API_KEY}`
         },
-        body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'Tickets <noreply@ticket-story.com>',
-          to: email,
-          subject: `Билет на мероприятие: ${event?.name || 'Мероприятие'}`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .ticket { background: #f5f5f5; border: 2px solid #00a8ff; border-radius: 12px; padding: 20px; margin: 20px 0; }
-                .ticket-header { text-align: center; margin-bottom: 20px; }
-                .ticket-title { font-size: 24px; font-weight: bold; color: #00a8ff; }
-                .ticket-info { margin: 10px 0; }
-                .ticket-label { font-weight: bold; }
-                .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <h1>Ваш билет</h1>
-                <div class="ticket">
-                  <div class="ticket-header">
-                    <div class="ticket-title">${event?.name || 'Мероприятие'}</div>
-                  </div>
-                  <div class="ticket-info">
-                    <span class="ticket-label">Мероприятие:</span> ${event?.name || 'Мероприятие'}
-                  </div>
-                  ${event?.date ? `<div class="ticket-info"><span class="ticket-label">Дата:</span> ${event.date}</div>` : ''}
-                  ${event?.time ? `<div class="ticket-info"><span class="ticket-label">Время:</span> ${event.time}</div>` : ''}
-                  ${event?.venue ? `<div class="ticket-info"><span class="ticket-label">Место:</span> ${event.venue}</div>` : ''}
-                  ${event?.address ? `<div class="ticket-info"><span class="ticket-label">Адрес:</span> ${event.address}</div>` : ''}
-                  ${category ? `<div class="ticket-info"><span class="ticket-label">Категория:</span> ${category.name}</div>` : ''}
-                  <div class="ticket-info">
-                    <span class="ticket-label">ID билета:</span>
-                    <span class="ticket-id">${ticketId}</span>
-                  </div>
-                </div>
-                <p>Предъявите этот билет на входе. QR-код будет доступен в приложении.</p>
-              </div>
-            </body>
-            </html>
-          `
-        })
+        body: JSON.stringify(emailPayload)
       });
 
       const responseData = await emailResponse.json().catch(() => ({}));
