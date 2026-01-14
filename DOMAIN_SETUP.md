@@ -155,4 +155,4 @@ CNAME   www     cname.vercel-dns.com.    Automatic
 
 ---
 
-**Примечание:** После настройки домена обновите `return_url` в настройках YooKassa, чтобы использовать ваш домен вместо `ticket-story.vercel.app`.
+**Примечание:** После настройки домена обновите `return_url` в настройках YooKassa, чтобы использовать ваш домен `tupik.xyz`.

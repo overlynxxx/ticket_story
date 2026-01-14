@@ -48,7 +48,7 @@ vercel --prod
 ## Проверка деплоя
 
 После деплоя проверьте:
-- URL: `https://ticket-story.vercel.app`
+- URL: `https://tupik.xyz`
 - Логи: Vercel Dashboard → Deployments → выберите деплой → Logs
 
 ## Если деплой не работает

@@ -221,7 +221,7 @@ export default async function handler(req, res) {
           if (sendReceipt) {
             console.log(`[${requestId}] 📧 Sending receipt to email: ${email.substring(0, 20)}...`);
             // Отправляем чек асинхронно
-            fetch(`${process.env.VERCEL_URL || 'https://ticket-story.vercel.app'}/api/payment/${paymentId}/send-receipt`, {
+            fetch(`${process.env.VERCEL_URL || 'https://tupik.xyz'}/api/payment/${paymentId}/send-receipt`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

@@ -142,7 +142,7 @@ export default async function handler(req, res) {
     // Формируем return_url - после оплаты пользователь вернется на эту страницу
     // На странице payment-success будет проверен статус платежа и созданы билеты
     // ЮКасса автоматически добавит payment_id в query параметры
-    const baseUrl = req.headers.origin || process.env.VERCEL_URL || 'https://ticket-story.vercel.app'
+    const baseUrl = req.headers.origin || process.env.VERCEL_URL || 'https://tupik.xyz'
     const returnUrl = process.env.RETURN_URL || `${baseUrl}/payment-success`
     console.log(`[${requestId}] Base URL: ${baseUrl}, Return URL: ${returnUrl}`)
     
