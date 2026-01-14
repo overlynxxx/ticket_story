@@ -198,7 +198,7 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
     try {
       console.log(`[${requestId}] Sending ticket ${ticketId} to ${email}`);
       
-      // Генерируем QR-код для билета
+      // Генерируем QR-код для билета (два варианта для максимальной совместимости)
       const qrCodeBuffer = await QRCode.toBuffer(ticketId, {
         errorCorrectionLevel: 'M',
         type: 'image/png',
@@ -206,8 +206,10 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
         margin: 2
       });
       const qrCodeBase64 = qrCodeBuffer.toString('base64');
+      const qrCodeDataUrl = `data:image/png;base64,${qrCodeBase64}`;
       const qrCodeCid = `qr-${ticketId.replace(/[^a-zA-Z0-9]/g, '-')}`;
       
+      // Используем гибридный подход: CID для современных клиентов, base64 как fallback
       const emailPayload = {
         from: EMAIL_FROM,
         to: email,
@@ -227,7 +229,7 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
               .ticket-label { font-weight: bold; }
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
               .qr-code { text-align: center; margin: 20px 0; }
-              .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; }
+              .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; display: block; margin: 0 auto; }
             </style>
           </head>
           <body>
@@ -250,7 +252,10 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
                   <span class="ticket-id">${ticketId}</span>
                 </div>
                 <div class="qr-code">
-                  <img src="cid:${qrCodeCid}" alt="QR Code для билета ${ticketId}" />
+                  <!-- Пробуем CID (для современных клиентов), если не работает - показывается base64 fallback -->
+                  <img src="cid:${qrCodeCid}" 
+                       onerror="this.onerror=null; this.src='${qrCodeDataUrl}'" 
+                       alt="QR Code для билета ${ticketId}" />
                 </div>
               </div>
               <p>Предъявите этот билет на входе. QR-код содержит информацию о билете.</p>
