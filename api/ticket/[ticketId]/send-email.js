@@ -83,12 +83,14 @@ export default async function handler(req, res) {
     }
 
     // Генерируем QR-код для билета
-    const qrCodeDataUrl = await QRCode.toDataURL(ticketId, {
+    const qrCodeBuffer = await QRCode.toBuffer(ticketId, {
       errorCorrectionLevel: 'M',
       type: 'image/png',
       width: 200,
       margin: 2
     });
+    const qrCodeBase64 = qrCodeBuffer.toString('base64');
+    const qrCodeCid = `qr-${ticketId.replace(/[^a-zA-Z0-9]/g, '-')}`;
 
     // Отправка email через Resend API
     const emailPayload = {
@@ -139,14 +141,21 @@ export default async function handler(req, res) {
                   <span class="ticket-id">${ticketId}</span>
                 </div>
                 <div class="qr-code">
-                  <img src="${qrCodeDataUrl}" alt="QR Code для билета ${ticketId}" />
+                  <img src="cid:${qrCodeCid}" alt="QR Code для билета ${ticketId}" />
                 </div>
               </div>
               <p>Предъявите этот билет на входе. QR-код содержит информацию о билете.</p>
             </div>
           </body>
           </html>
-        `
+        `,
+      attachments: [
+        {
+          filename: `qr-${ticketId}.png`,
+          content: qrCodeBase64,
+          cid: qrCodeCid
+        }
+      ]
     };
 
     console.log(`[${requestId}] Sending email via Resend API:`, {
