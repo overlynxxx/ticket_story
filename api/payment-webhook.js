@@ -217,33 +217,32 @@ export default async function handler(req, res) {
             });
 
           // Отправляем информационный чек через Resend (если фискальный чек не был отправлен через ЮКассу)
-          // Временно отключено для отладки синтаксической ошибки
-          // const sendReceipt = payment.metadata?.sendReceipt !== 'false';
-          // if (sendReceipt) {
-          //   console.log(`[${requestId}] 📧 Sending receipt to email: ${email.substring(0, 20)}...`);
-          //   // Отправляем чек асинхронно
-          //   fetch(`${process.env.VERCEL_URL || 'https://tupik.xyz'}/api/payment/${paymentId}/send-receipt`, {
-          //     method: 'POST',
-          //     headers: {
-          //       'Content-Type': 'application/json'
-          //     },
-          //     body: JSON.stringify({ paymentId })
-          //   })
-          //     .then(res => res.json())
-          //     .then(data => {
-          //       if (data.success) {
-          //         console.log(`[${requestId}] ✅ Receipt sent successfully:`, data.emailId);
-          //       } else {
-          //         console.log(`[${requestId}] ⚠️ Receipt sending skipped or failed:`, data.error);
-          //       }
-          //     })
-          //     .catch(err => {
-          //       console.error(`[${requestId}] ❌ Error sending receipt:`, {
-          //         message: err.message,
-          //         stack: err.stack
-          //       });
-          //     });
-          // }
+          const sendReceipt = payment.metadata?.sendReceipt !== 'false';
+          if (sendReceipt) {
+            console.log(`[${requestId}] 📧 Sending receipt to email: ${email.substring(0, 20)}...`);
+            // Отправляем чек асинхронно (не блокируем webhook)
+            fetch(`${process.env.VERCEL_URL || 'https://tupik.xyz'}/api/payment/${paymentId}/send-receipt`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ paymentId })
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  console.log(`[${requestId}] ✅ Receipt sent successfully:`, data.emailId);
+                } else {
+                  console.log(`[${requestId}] ⚠️ Receipt sending skipped or failed:`, data.error);
+                }
+              })
+              .catch(err => {
+                console.error(`[${requestId}] ❌ Error sending receipt:`, {
+                  message: err.message,
+                  stack: err.stack
+                });
+              });
+          }
         } else {
           console.log(`[${requestId}] ⏭️ Skipping email sending:`, {
             reason: !email ? 'no email' : 'sendEmail is false',
