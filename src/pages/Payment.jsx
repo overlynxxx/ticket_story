@@ -371,9 +371,14 @@ function Payment({ webApp, config }) {
               disabled={isProcessing}
             />
             <span className="checkbox-text">
-              Я согласен на обработку персональных данных <span className="required">*</span>
+              Я согласен на обработку персональных данных и получение билетов на email <span className="required">*</span>
             </span>
           </label>
+          {consentChecked && email && (
+            <p className="checkbox-hint">
+              Билеты будут автоматически отправлены на {email} после успешной оплаты
+            </p>
+          )}
         </div>
       </div>
 

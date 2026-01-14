@@ -375,6 +375,15 @@
   color: rgba(255, 255, 255, 1);
 }
 
+.checkbox-hint {
+  font-size: 13px;
+  color: rgba(0, 168, 255, 0.8);
+  margin-top: 8px;
+  margin-left: 32px;
+  font-style: italic;
+  text-shadow: 0 0 8px rgba(0, 168, 255, 0.3);
+}
+
 /* Адаптивность */
 @media (max-width: 480px) {
   .payment-container {
