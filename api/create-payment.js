@@ -4,6 +4,14 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export default async function handler(req, res) {
+  const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`[${requestId}] [${new Date().toISOString()}] create-payment: ${req.method} ${req.url}`);
+  console.log(`[${requestId}] Headers:`, {
+    origin: req.headers.origin,
+    host: req.headers.host,
+    'user-agent': req.headers['user-agent']?.substring(0, 50)
+  });
+
   if (req.method !== 'POST') {
     res.setHeader('Content-Type', 'application/json');
     return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -11,6 +19,7 @@ export default async function handler(req, res) {
 
   try {
     const { amount, eventId, categoryId, quantity, userId } = req.body;
+    console.log(`[${requestId}] Request body:`, { amount, eventId, categoryId, quantity, userId: userId?.substring(0, 10) });
 
     // Валидация
     if (!amount || !eventId || !categoryId || !quantity) {
@@ -114,9 +123,10 @@ export default async function handler(req, res) {
     
     // Формируем return_url - после оплаты пользователь вернется на эту страницу
     // На странице payment-success будет проверен статус платежа и созданы билеты
-    // ЮКасса автоматически подставит {PAYMENT_ID} на реальный ID платежа
-    const baseUrl = req.headers.origin || 'https://ticket-story.vercel.app'
+    // ЮКасса автоматически добавит payment_id в query параметры
+    const baseUrl = req.headers.origin || process.env.VERCEL_URL || 'https://ticket-story.vercel.app'
     const returnUrl = process.env.RETURN_URL || `${baseUrl}/payment-success`
+    console.log(`[${requestId}] Base URL: ${baseUrl}, Return URL: ${returnUrl}`)
     
     // Оплата через СБП (Система быстрых платежей)
     // Согласно документации: https://yookassa.ru/developers/payment-acceptance/integration-scenarios/manual-integration/other/sbp
@@ -149,12 +159,13 @@ export default async function handler(req, res) {
     }, idempotenceKey);
 
     // Логируем ответ от ЮКассы для отладки
-    console.log('YooKassa payment response:', {
+    console.log(`[${requestId}] YooKassa payment response:`, {
       id: payment.id,
       status: payment.status,
       confirmation: payment.confirmation,
       confirmationUrl: payment.confirmation?.confirmation_url,
-      confirmationData: payment.confirmation?.confirmation_data
+      confirmationData: payment.confirmation?.confirmation_data,
+      returnUrl: returnUrl
     });
 
     // Для СБП используем confirmation_url - это ссылка на страницу ЮКассы с QR-кодом
@@ -173,15 +184,18 @@ export default async function handler(req, res) {
     }
 
     // Явно устанавливаем Content-Type для корректной обработки на фронтенде
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).json({
+    const responseData = {
       success: true,
       paymentId: payment.id,
       confirmationUrl: confirmationUrl, // URL страницы ЮКассы с QR-кодом СБП
       amount: amount,
       status: payment.status,
-      paymentMethod: payment.payment_method?.type // 'sbp'
-    });
+      paymentMethod: payment.payment_method?.type, // 'sbp'
+      returnUrl: returnUrl // Для отладки
+    };
+    console.log(`[${requestId}] Sending response:`, { ...responseData, confirmationUrl: confirmationUrl?.substring(0, 50) + '...' });
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json(responseData);
   } catch (error) {
     // Детальное логирование ошибки
     console.error('Ошибка создания платежа:', {

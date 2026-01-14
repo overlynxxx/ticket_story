@@ -62,8 +62,14 @@ function PaymentSuccess({ webApp, config }) {
 
   const checkPaymentAndRedirect = async (actualPaymentId) => {
     try {
-      console.log('Checking payment status for:', actualPaymentId, 'API_URL:', API_URL)
-      const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
+      const statusUrl = `${API_URL}/api/payment/${actualPaymentId}/status`
+      console.log('[PaymentSuccess] Checking payment status:', {
+        paymentId: actualPaymentId,
+        apiUrl: API_URL,
+        fullUrl: statusUrl,
+        timestamp: new Date().toISOString()
+      })
+      const response = await fetch(statusUrl)
       
       // Проверяем Content-Type перед парсингом JSON
       const contentType = response.headers.get('content-type') || ''
