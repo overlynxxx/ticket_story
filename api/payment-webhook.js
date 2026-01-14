@@ -2,6 +2,8 @@ import { YooCheckout } from '@a2seven/yoo-checkout';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import QRCode from 'qrcode';
+import PDFDocument from 'pdfkit';
+import { Readable } from 'stream';
 
 // Асинхронная функция для отправки информационного чека через Resend
 async function sendReceiptAsync(payment, event, category, requestId) {
@@ -146,6 +148,86 @@ async function sendReceiptAsync(payment, event, category, requestId) {
   }
 }
 
+// Функция для генерации PDF билета
+async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: [400, 600],
+        margin: 30
+      });
+      
+      const chunks = [];
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(chunks);
+        resolve(pdfBuffer);
+      });
+      doc.on('error', reject);
+      
+      // Заголовок
+      doc.fontSize(24)
+         .fillColor('#00a8ff')
+         .text(event?.name || 'Мероприятие', { align: 'center' });
+      
+      doc.moveDown(1);
+      
+      // Информация о мероприятии
+      doc.fontSize(12)
+         .fillColor('#333');
+      
+      if (event?.date) {
+        doc.text(`Дата: ${event.date}`, { align: 'left' });
+      }
+      if (event?.time) {
+        doc.text(`Время: ${event.time}`, { align: 'left' });
+      }
+      if (event?.venue) {
+        doc.text(`Место: ${event.venue}`, { align: 'left' });
+      }
+      if (event?.address) {
+        doc.text(`Адрес: ${event.address}`, { align: 'left' });
+      }
+      if (category) {
+        doc.text(`Категория: ${category.name}`, { align: 'left' });
+      }
+      
+      doc.moveDown(1);
+      
+      // ID билета
+      doc.fontSize(10)
+         .fillColor('#666')
+         .text(`ID билета: ${ticketId}`, { align: 'left' });
+      
+      doc.moveDown(2);
+      
+      // QR-код (центрируем)
+      const qrSize = 150;
+      const pageWidth = doc.page.width;
+      const qrX = (pageWidth - qrSize) / 2;
+      const qrY = doc.y;
+      
+      doc.image(qrCodeBuffer, qrX, qrY, {
+        width: qrSize,
+        height: qrSize,
+        align: 'center'
+      });
+      
+      doc.moveDown(2);
+      
+      // Инструкция
+      doc.fontSize(10)
+         .fillColor('#666')
+         .text('Предъявите этот билет на входе.', { align: 'center' });
+      doc.text('QR-код содержит информацию о билете.', { align: 'center' });
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 // Асинхронная функция для отправки билетов на email
 async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, requestId) {
   console.log(`[${requestId}] sendTicketsToEmailAsync called:`, {
@@ -209,7 +291,37 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
       const qrCodeDataUrl = `data:image/png;base64,${qrCodeBase64}`;
       const qrCodeCid = `qr-${ticketId.replace(/[^a-zA-Z0-9]/g, '-')}`;
       
+      // Генерируем PDF билета
+      let ticketPDFBase64 = null;
+      try {
+        const ticketPDFBuffer = await generateTicketPDF(ticketId, event, category, qrCodeBuffer);
+        ticketPDFBase64 = ticketPDFBuffer.toString('base64');
+        console.log(`[${requestId}] ✅ PDF билета сгенерирован для ${ticketId}, размер: ${ticketPDFBuffer.length} байт`);
+      } catch (pdfError) {
+        console.error(`[${requestId}] ❌ Ошибка генерации PDF для ${ticketId}:`, {
+          message: pdfError.message,
+          stack: pdfError.stack
+        });
+        // Продолжаем без PDF, отправляем только HTML
+      }
+      
       // Используем гибридный подход: CID для современных клиентов, base64 как fallback
+      const attachments = [
+        {
+          filename: `qr-${ticketId}.png`,
+          content: qrCodeBase64,
+          cid: qrCodeCid
+        }
+      ];
+      
+      // Добавляем PDF билета как attachment, если он был успешно сгенерирован
+      if (ticketPDFBase64) {
+        attachments.push({
+          filename: `Билет-${ticketId}.pdf`,
+          content: ticketPDFBase64
+        });
+      }
+      
       const emailPayload = {
         from: EMAIL_FROM,
         to: email,
@@ -230,11 +342,13 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
               .qr-code { text-align: center; margin: 20px 0; }
               .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; display: block; margin: 0 auto; }
+              .pdf-notice { background: #e3f2fd; border-left: 4px solid #00a8ff; padding: 12px; margin: 20px 0; border-radius: 4px; }
             </style>
           </head>
           <body>
             <div class="container">
               <h1>Ваш билет</h1>
+              ${ticketPDFBase64 ? '<div class="pdf-notice"><strong>📎 Полный билет в формате PDF прикреплен к письму.</strong></div>' : ''}
               <div class="ticket">
                 <div class="ticket-header">
                   <div class="ticket-title">${event?.name || 'Мероприятие'}</div>
@@ -263,13 +377,7 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
           </body>
           </html>
         `,
-        attachments: [
-          {
-            filename: `qr-${ticketId}.png`,
-            content: qrCodeBase64,
-            cid: qrCodeCid
-          }
-        ]
+        attachments: attachments
       };
       
       console.log(`[${requestId}] Email payload for ${ticketId}:`, {
