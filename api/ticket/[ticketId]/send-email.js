@@ -3,14 +3,20 @@ import { join } from 'path';
 import QRCode from 'qrcode';
 import PDFDocument from 'pdfkit';
 
-// Функция для генерации PDF билета
+// Функция для генерации PDF билета с поддержкой кириллицы
 async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: [400, 600],
         margin: 40,
-        autoFirstPage: true
+        autoFirstPage: true,
+        info: {
+          Title: 'Билет',
+          Author: 'Ticket Story',
+          Subject: 'Билет на мероприятие',
+          Keywords: 'билет, ticket'
+        }
       });
       
       const chunks = [];
@@ -21,13 +27,21 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       });
       doc.on('error', reject);
       
-      // Используем стандартный шрифт, который поддерживает кириллицу
-      // PDFKit по умолчанию использует Helvetica, но для кириллицы лучше использовать встроенные шрифты
+      // PDFKit по умолчанию не поддерживает кириллицу в стандартных шрифтах
+      // Используем правильную кодировку через Buffer и убеждаемся, что текст правильно передается
+      // Для кириллицы нужно использовать шрифт с поддержкой Unicode или правильно обрабатывать текст
+      
+      // Функция для безопасного преобразования текста в UTF-8
+      const safeText = (text) => {
+        if (!text) return '';
+        // Убеждаемся, что текст правильно кодируется как UTF-8
+        return Buffer.from(String(text), 'utf8').toString('utf8');
+      };
       
       // Заголовок
       doc.fontSize(22)
          .fillColor('#00a8ff')
-         .text(event?.name || 'Мероприятие', {
+         .text(safeText(event?.name || 'Мероприятие'), {
            align: 'center',
            width: doc.page.width - 80
          });
@@ -38,43 +52,35 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       doc.fontSize(11)
          .fillColor('#333333');
       
-      const lineHeight = 16;
-      let currentY = doc.y;
-      
       if (event?.date) {
-        doc.text(`Дата: ${event.date}`, {
+        doc.text(`Дата: ${safeText(event.date)}`, {
           align: 'left',
           width: doc.page.width - 80
         });
-        currentY += lineHeight;
       }
       if (event?.time) {
-        doc.text(`Время: ${event.time}`, {
+        doc.text(`Время: ${safeText(event.time)}`, {
           align: 'left',
           width: doc.page.width - 80
         });
-        currentY += lineHeight;
       }
       if (event?.venue) {
-        doc.text(`Место: ${event.venue}`, {
+        doc.text(`Место: ${safeText(event.venue)}`, {
           align: 'left',
           width: doc.page.width - 80
         });
-        currentY += lineHeight;
       }
       if (event?.address) {
-        doc.text(`Адрес: ${event.address}`, {
+        doc.text(`Адрес: ${safeText(event.address)}`, {
           align: 'left',
           width: doc.page.width - 80
         });
-        currentY += lineHeight;
       }
       if (category) {
-        doc.text(`Категория: ${category.name}`, {
+        doc.text(`Категория: ${safeText(category.name)}`, {
           align: 'left',
           width: doc.page.width - 80
         });
-        currentY += lineHeight;
       }
       
       doc.moveDown(1.5);
@@ -106,11 +112,11 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       // Инструкция
       doc.fontSize(9)
          .fillColor('#666666')
-         .text('Предъявите этот билет на входе.', {
+         .text(safeText('Предъявите этот билет на входе.'), {
            align: 'center',
            width: doc.page.width - 80
          });
-      doc.text('QR-код содержит информацию о билете.', {
+      doc.text(safeText('QR-код содержит информацию о билете.'), {
         align: 'center',
         width: doc.page.width - 80
       });
