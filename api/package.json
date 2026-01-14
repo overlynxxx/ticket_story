@@ -7,6 +7,7 @@
   "dependencies": {
     "@a2seven/yoo-checkout": "^1.1.4",
     "dotenv": "^16.3.1",
+    "qrcode": "^1.5.3",
     "uuid": "^9.0.1"
   }
 }

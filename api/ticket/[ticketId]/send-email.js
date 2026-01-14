@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import QRCode from 'qrcode';
 
 export default async function handler(req, res) {
   const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

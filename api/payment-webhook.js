@@ -1,6 +1,7 @@
 import { YooCheckout } from '@a2seven/yoo-checkout';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import QRCode from 'qrcode';
 
 // Асинхронная функция для отправки информационного чека через Resend
 async function sendReceiptAsync(payment, event, category, requestId) {
@@ -197,6 +198,14 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
     try {
       console.log(`[${requestId}] Sending ticket ${ticketId} to ${email}`);
       
+      // Генерируем QR-код для билета
+      const qrCodeDataUrl = await QRCode.toDataURL(ticketId, {
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        width: 200,
+        margin: 2
+      });
+      
       const emailPayload = {
         from: EMAIL_FROM,
         to: email,
@@ -215,6 +224,8 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
               .ticket-info { margin: 10px 0; }
               .ticket-label { font-weight: bold; }
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
+              .qr-code { text-align: center; margin: 20px 0; }
+              .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; }
             </style>
           </head>
           <body>
@@ -236,8 +247,11 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
                   <span class="ticket-label">ID билета:</span>
                   <span class="ticket-id">${ticketId}</span>
                 </div>
+                <div class="qr-code">
+                  <img src="${qrCodeDataUrl}" alt="QR Code для билета ${ticketId}" />
+                </div>
               </div>
-              <p>Предъявите этот билет на входе. QR-код будет доступен в приложении.</p>
+              <p>Предъявите этот билет на входе. QR-код содержит информацию о билете.</p>
             </div>
           </body>
           </html>
