@@ -29,8 +29,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { paymentId } = req.query;
+    // В Vercel динамические параметры доступны через req.query
+    // Но также проверяем URL напрямую для надежности
+    const paymentId = req.query.paymentId || 
+                     req.url?.match(/\/payment\/([^\/]+)\/status/)?.[1] ||
+                     req.url?.split('/').filter(Boolean).find((part, i, arr) => arr[i-1] === 'payment');
+    
     console.log(`[${requestId}] Checking payment status for: ${paymentId}`);
+    console.log(`[${requestId}] Full request details:`, {
+      url: req.url,
+      query: req.query,
+      method: req.method,
+      path: req.url?.split('?')[0]
+    });
 
     if (!paymentId) {
       return res.status(400).json({
