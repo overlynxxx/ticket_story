@@ -15,6 +15,9 @@ function Payment({ webApp, config }) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [paymentData, setPaymentData] = useState(null)
+  const [email, setEmail] = useState('')
+  const [consentChecked, setConsentChecked] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   // Находим мероприятие
   const event = eventId 
@@ -25,8 +28,44 @@ function Payment({ webApp, config }) {
   const category = event?.ticketCategories?.find(cat => cat.id === categoryId)
   const totalPrice = category ? category.price * quantity : 0
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const handlePayment = async () => {
     if (isProcessing) return
+
+    // Валидация email
+    if (!email || !email.trim()) {
+      setEmailError('Введите email адрес')
+      if (webApp) {
+        webApp.showAlert('Пожалуйста, введите email адрес')
+      } else {
+        alert('Пожалуйста, введите email адрес')
+      }
+      return
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError('Введите корректный email адрес')
+      if (webApp) {
+        webApp.showAlert('Пожалуйста, введите корректный email адрес')
+      } else {
+        alert('Пожалуйста, введите корректный email адрес')
+      }
+      return
+    }
+
+    // Проверка согласия
+    if (!consentChecked) {
+      if (webApp) {
+        webApp.showAlert('Необходимо согласие на обработку персональных данных')
+      } else {
+        alert('Необходимо согласие на обработку персональных данных')
+      }
+      return
+    }
 
     // Если цена 0 (бесплатный билет), сразу выдаем билет
     if (totalPrice === 0) {
@@ -37,6 +76,7 @@ function Payment({ webApp, config }) {
     }
 
     setIsProcessing(true)
+    setEmailError('')
 
     try {
       const currentEventId = eventId || event?.id
@@ -62,7 +102,8 @@ function Payment({ webApp, config }) {
             eventId: currentEventId,
             categoryId: categoryId,
             quantity: quantity,
-            userId: userId
+            userId: userId,
+            email: email.trim()
           }),
           signal: controller.signal
         })
@@ -214,7 +255,14 @@ function Payment({ webApp, config }) {
   useEffect(() => {
     if (webApp) {
       const buttonText = totalPrice === 0 ? 'Получить билет' : 'Оплатить'
+      const isDisabled = !email.trim() || !validateEmail(email) || !consentChecked
+      
       webApp.MainButton.setText(buttonText)
+      if (isDisabled || isProcessing) {
+        webApp.MainButton.disable()
+      } else {
+        webApp.MainButton.enable()
+      }
       webApp.MainButton.show()
       webApp.MainButton.onClick(handlePayment)
       return () => {
@@ -222,7 +270,7 @@ function Payment({ webApp, config }) {
         webApp.MainButton.offClick(handlePayment)
       }
     }
-  }, [webApp, totalPrice, isProcessing])
+  }, [webApp, totalPrice, isProcessing, email, consentChecked])
 
   if (!event) {
     return (
@@ -288,13 +336,52 @@ function Payment({ webApp, config }) {
         </div>
       )}
 
+      {/* Форма ввода email и согласия */}
+      <div className="payment-form-section">
+        <h3 className="form-section-title">Контактные данные</h3>
+        
+        <div className="form-group">
+          <label htmlFor="email" className="form-label">
+            Email адрес <span className="required">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            className={`form-input ${emailError ? 'error' : ''}`}
+            placeholder="example@email.com"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setEmailError('')
+            }}
+            disabled={isProcessing}
+          />
+          {emailError && <span className="error-message">{emailError}</span>}
+        </div>
+
+        <div className="form-group checkbox-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              className="checkbox-input"
+              checked={consentChecked}
+              onChange={(e) => setConsentChecked(e.target.checked)}
+              disabled={isProcessing}
+            />
+            <span className="checkbox-text">
+              Я согласен на обработку персональных данных <span className="required">*</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       {/* Кнопка оплаты - показываем только если НЕ в Telegram (в Telegram используется MainButton) */}
       {/* Проверяем, что мы действительно в Telegram Mini App, а не просто есть объект webApp */}
       {(!webApp || !window.Telegram?.WebApp?.initData) && (
         <button 
           className="payment-button" 
           onClick={handlePayment}
-          disabled={isProcessing}
+          disabled={isProcessing || !email.trim() || !validateEmail(email) || !consentChecked}
         >
           {isProcessing ? 'Обработка...' : totalPrice === 0 ? 'Получить билет' : 'Оплатить'}
         </button>

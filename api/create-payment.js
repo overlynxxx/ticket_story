@@ -18,8 +18,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { amount, eventId, categoryId, quantity, userId } = req.body;
-    console.log(`[${requestId}] Request body:`, { amount, eventId, categoryId, quantity, userId: userId?.substring(0, 10) });
+    const { amount, eventId, categoryId, quantity, userId, email } = req.body;
+    console.log(`[${requestId}] Request body:`, { amount, eventId, categoryId, quantity, userId: userId?.substring(0, 10), email: email ? email.substring(0, 20) + '...' : 'not provided' });
 
     // Валидация
     if (!amount || !eventId || !categoryId || !quantity) {
@@ -27,6 +27,24 @@ export default async function handler(req, res) {
       return res.status(400).json({
         success: false,
         error: 'Недостаточно данных для создания платежа'
+      });
+    }
+
+    // Валидация email
+    if (!email || !email.trim()) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(400).json({
+        success: false,
+        error: 'Email адрес обязателен'
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный формат email адреса'
       });
     }
 
@@ -153,6 +171,7 @@ export default async function handler(req, res) {
         categoryId,
         quantity: quantity.toString(),
         userId: userId || 'anonymous',
+        email: email.trim(),
         eventName: event.name,
         categoryName: category.name
       },
