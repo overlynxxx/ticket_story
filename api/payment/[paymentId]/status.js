@@ -3,6 +3,16 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export default async function handler(req, res) {
+  // Устанавливаем CORS заголовки
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
@@ -41,10 +51,14 @@ export default async function handler(req, res) {
     if (payment.status === 'succeeded' && payment.metadata) {
       const quantity = parseInt(payment.metadata.quantity || '1');
       // Создаем отдельный билет для каждого купленного билета
+      // Используем timestamp и случайные строки для уникальности
+      const baseTimestamp = Date.now();
       for (let i = 0; i < quantity; i++) {
-        const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`;
+        const randomStr = Math.random().toString(36).substr(2, 9);
+        const ticketId = `TICKET-${baseTimestamp}-${randomStr}-${i}`;
         ticketIds.push(ticketId);
       }
+      console.log(`Generated ${ticketIds.length} tickets for payment ${paymentId}:`, ticketIds);
       // В продакшене здесь нужно сохранить билеты в БД
     }
 
@@ -58,6 +72,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Ошибка проверки платежа:', error);
+    res.setHeader('Content-Type', 'application/json');
     res.status(500).json({
       success: false,
       error: error.message || 'Ошибка проверки платежа'

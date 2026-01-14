@@ -66,15 +66,30 @@ function PaymentSuccess({ webApp, config }) {
       const response = await fetch(`${API_URL}/api/payment/${actualPaymentId}/status`)
       
       // Проверяем Content-Type перед парсингом JSON
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
+      const contentType = response.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) {
         const text = await response.text()
-        console.error('Non-JSON response:', text.substring(0, 200))
-        throw new Error(`Сервер вернул неверный формат ответа. Проверьте, что API работает корректно.`)
+        console.error('Non-JSON response from payment status API:', {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: contentType,
+          textPreview: text.substring(0, 200),
+          url: `${API_URL}/api/payment/${actualPaymentId}/status`
+        })
+        // Если это HTML (404 страница), даем более понятное сообщение
+        if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+          throw new Error('API endpoint не найден. Проверьте, что сервер развернут корректно.')
+        }
+        throw new Error(`Сервер вернул неверный формат ответа (${contentType || 'не указан'}). Проверьте, что API работает корректно.`)
       }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        console.error('Payment status API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
         throw new Error(errorData.error || `HTTP ${response.status}: Не удалось проверить статус платежа`)
       }
 

@@ -78,64 +78,6 @@ function TicketView({ webApp, config }) {
     }
   }
 
-  const handleAddToWallet = async () => {
-    try {
-      // Запрашиваем .pkpass файл с сервера
-      const response = await fetch(`${API_URL}/api/ticket/${currentTicketId}/wallet?eventId=${eventId}&categoryId=${categoryId}`)
-      
-      // Проверяем Content-Type перед обработкой
-      const contentType = response.headers.get('content-type') || ''
-      
-      // Если это .pkpass файл
-      if (contentType.includes('application/vnd.apple.pkpass')) {
-        // Скачиваем файл
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `ticket-${currentTicketId}.pkpass`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-
-        // На iOS автоматически откроется Wallet для добавления
-        if (webApp) {
-          webApp.showAlert('Билет загружен! Откройте файл для добавления в Apple Wallet.')
-        }
-        return
-      }
-
-      // Если это JSON ответ (сервер еще не настроен)
-      if (contentType.includes('application/json')) {
-        const data = await response.json().catch(() => ({}))
-        if (data.error && (data.error.includes('not configured') || data.error.includes('not available'))) {
-          // Сервер еще не настроен - это нормально, показываем информативное сообщение
-          if (webApp) {
-            webApp.showAlert('Apple Wallet пока не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
-          } else {
-            alert('Apple Wallet пока не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
-          }
-          return
-        }
-      }
-
-      // Если ответ не JSON и не .pkpass, это ошибка
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '')
-        console.error('Wallet API error:', response.status, errorText.substring(0, 100))
-        throw new Error(`Сервер вернул ошибку: ${response.status}`)
-      }
-    } catch (error) {
-      console.error('Ошибка добавления в Apple Wallet:', error)
-      // Показываем информативное сообщение, что функция пока недоступна
-      if (webApp) {
-        webApp.showAlert('Apple Wallet пока не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
-      } else {
-        alert('Apple Wallet пока не настроен. Используйте функцию "Сохранить как фото" для сохранения билета.')
-      }
-    }
-  }
 
   const handlePrevTicket = () => {
     if (currentTicketIndex > 0) {
@@ -255,9 +197,6 @@ function TicketView({ webApp, config }) {
       <div className="ticket-actions">
         <button className="save-button" onClick={handleSaveAsImage}>
           📷 Сохранить как фото
-        </button>
-        <button className="wallet-button" onClick={handleAddToWallet}>
-          🎫 Добавить в Apple Wallet
         </button>
       </div>
     </div>
