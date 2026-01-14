@@ -164,7 +164,9 @@ function Payment({ webApp, config }) {
           localStorage.setItem('lastPaymentData', JSON.stringify({
             eventId: currentEventId,
             categoryId: categoryId,
-            quantity: quantity
+            quantity: quantity,
+            email: email.trim(),
+            sendEmail: consentChecked // Сохраняем согласие на отправку email
           }))
 
           // Для СБП используем confirmation_url - это страница ЮКассы с QR-кодом

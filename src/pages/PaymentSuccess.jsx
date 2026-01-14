@@ -64,6 +64,44 @@ function PaymentSuccess({ webApp, config }) {
     checkPaymentAndRedirect(actualPaymentId)
   }, [paymentId, navigate, searchParams])
 
+  // Функция для отправки билетов на email
+  const sendTicketsToEmail = async (ticketIds, email, eventId, categoryId) => {
+    console.log('[PaymentSuccess] Sending tickets to email:', { ticketIds, email, eventId, categoryId })
+    
+    // Отправляем каждый билет отдельно
+    const sendPromises = ticketIds.map(async (ticketId) => {
+      try {
+        const response = await fetch(`${API_URL}/api/ticket/${ticketId}/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ticketId: ticketId,
+            email: email,
+            eventId: eventId,
+            categoryId: categoryId
+          })
+        })
+
+        const data = await response.json()
+        if (data.success) {
+          console.log(`[PaymentSuccess] Ticket ${ticketId} sent to ${email}`)
+        } else {
+          console.error(`[PaymentSuccess] Failed to send ticket ${ticketId}:`, data.error)
+        }
+        return data
+      } catch (error) {
+        console.error(`[PaymentSuccess] Error sending ticket ${ticketId}:`, error)
+        return { success: false, error: error.message }
+      }
+    })
+
+    const results = await Promise.allSettled(sendPromises)
+    const successCount = results.filter(r => r.status === 'fulfilled' && r.value?.success).length
+    console.log(`[PaymentSuccess] Sent ${successCount} of ${ticketIds.length} tickets to email`)
+  }
+
   const checkPaymentAndRedirect = async (actualPaymentId) => {
     try {
       const statusUrl = `${API_URL}/api/payment/${actualPaymentId}/status`
@@ -131,6 +169,36 @@ function PaymentSuccess({ webApp, config }) {
               return ids
             })()
         
+        // Получаем email из metadata или из сохраненных данных
+        const email = data.metadata?.email || (() => {
+          try {
+            const savedData = localStorage.getItem('lastPaymentData')
+            return savedData ? JSON.parse(savedData).email : null
+          } catch (e) {
+            return null
+          }
+        })()
+        
+        // Проверяем, было ли согласие на отправку email
+        const sendEmail = data.metadata?.sendEmail !== false && (() => {
+          try {
+            const savedData = localStorage.getItem('lastPaymentData')
+            return savedData ? JSON.parse(savedData).sendEmail : false
+          } catch (e) {
+            return false
+          }
+        })()
+        
+        // Автоматически отправляем билеты на email, если было согласие
+        if (sendEmail && email && ticketIds.length > 0) {
+          console.log('[PaymentSuccess] Sending tickets to email:', email, ticketIds)
+          // Отправляем все билеты асинхронно (не блокируем редирект)
+          sendTicketsToEmail(ticketIds, email, eventId, categoryId).catch(err => {
+            console.error('[PaymentSuccess] Error sending tickets to email:', err)
+            // Не показываем ошибку пользователю, чтобы не прерывать процесс
+          })
+        }
+        
         // Перенаправляем на страницу билетов
         const firstTicketId = ticketIds[0]
         const ticketUrl = `/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${eventId}&tickets=${ticketIds.join(',')}`
@@ -138,6 +206,7 @@ function PaymentSuccess({ webApp, config }) {
         
         // Очищаем сохраненный payment_id
         localStorage.removeItem('lastPaymentId')
+        localStorage.removeItem('lastPaymentData')
         
         navigate(ticketUrl, { replace: true })
       } else if (data.status === 'canceled') {
