@@ -150,7 +150,7 @@ async function sendReceiptAsync(payment, event, category, requestId) {
 
 // Функция для генерации PDF билета с поддержкой кириллицы
 async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: [400, 600],
@@ -172,31 +172,25 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       });
       doc.on('error', reject);
       
-      // PDFKit по умолчанию не поддерживает кириллицу в стандартных шрифтах
-      // Используем транслитерацию для временного решения или загружаем шрифт с поддержкой кириллицы
-      // Для правильной поддержки кириллицы нужен шрифт с поддержкой Unicode
+      // Загружаем шрифт с поддержкой кириллицы из CDN
+      // Используем Roboto Regular, который поддерживает кириллицу
+      let fontRegistered = false;
+      try {
+        const fontUrl = 'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf';
+        const fontResponse = await fetch(fontUrl);
+        if (fontResponse.ok) {
+          const fontBuffer = Buffer.from(await fontResponse.arrayBuffer());
+          doc.registerFont('Roboto', fontBuffer);
+          doc.font('Roboto');
+          fontRegistered = true;
+          console.log('✅ Шрифт Roboto загружен и зарегистрирован');
+        }
+      } catch (fontError) {
+        console.warn('⚠️ Не удалось загрузить шрифт Roboto, используем стандартный:', fontError.message);
+        // Продолжаем без кастомного шрифта
+      }
       
-      // Функция для транслитерации кириллицы в латиницу (временное решение)
-      // В идеале нужно использовать шрифт с поддержкой кириллицы
-      const transliterate = (text) => {
-        if (!text) return '';
-        const map = {
-          'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'E',
-          'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
-          'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
-          'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch',
-          'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
-          'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
-          'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-          'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-          'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-          'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
-        };
-        return String(text).split('').map(char => map[char] || char).join('');
-      };
-      
-      // Пока используем оригинальный текст - PDFKit должен поддерживать UTF-8
-      // Если не работает, можно использовать transliterate
+      // Функция для безопасного текста
       const safeText = (text) => {
         if (!text) return '';
         return String(text);

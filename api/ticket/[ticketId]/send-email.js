@@ -5,7 +5,7 @@ import PDFDocument from 'pdfkit';
 
 // Функция для генерации PDF билета с поддержкой кириллицы
 async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: [400, 600],
@@ -27,15 +27,28 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       });
       doc.on('error', reject);
       
-      // PDFKit по умолчанию не поддерживает кириллицу в стандартных шрифтах
-      // Используем правильную кодировку через Buffer и убеждаемся, что текст правильно передается
-      // Для кириллицы нужно использовать шрифт с поддержкой Unicode или правильно обрабатывать текст
+      // Загружаем шрифт с поддержкой кириллицы из CDN
+      // Используем Roboto Regular, который поддерживает кириллицу
+      let fontRegistered = false;
+      try {
+        const fontUrl = 'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf';
+        const fontResponse = await fetch(fontUrl);
+        if (fontResponse.ok) {
+          const fontBuffer = Buffer.from(await fontResponse.arrayBuffer());
+          doc.registerFont('Roboto', fontBuffer);
+          doc.font('Roboto');
+          fontRegistered = true;
+          console.log('✅ Шрифт Roboto загружен и зарегистрирован');
+        }
+      } catch (fontError) {
+        console.warn('⚠️ Не удалось загрузить шрифт Roboto, используем стандартный:', fontError.message);
+        // Продолжаем без кастомного шрифта
+      }
       
-      // Функция для безопасного преобразования текста в UTF-8
+      // Функция для безопасного текста
       const safeText = (text) => {
         if (!text) return '';
-        // Убеждаемся, что текст правильно кодируется как UTF-8
-        return Buffer.from(String(text), 'utf8').toString('utf8');
+        return String(text);
       };
       
       // Заголовок
