@@ -152,7 +152,28 @@ export default async function handler(req, res) {
     // 1. payment_method_data с типом 'sbp'
     // 2. confirmation с типом 'redirect' (не 'qr'!)
     // 3. После создания платежа перенаправить пользователя на confirmation_url
-    const payment = await checkout.createPayment({
+    
+    // Подготовка данных для фискального чека (54-ФЗ)
+    // ВАЖНО: Для работы фискальных чеков нужна настройка онлайн-кассы и ОФД в ЮКассе
+    // Если онлайн-касса не настроена, параметр receipt будет проигнорирован
+    const receipt = process.env.YOOKASSA_RECEIPT_ENABLED === 'true' ? {
+      customer: {
+        email: email.trim()
+      },
+      items: [
+        {
+          description: `Билеты: ${event.name} - ${category.name}`,
+          quantity: quantity.toString(),
+          amount: {
+            value: amount.toFixed(2),
+            currency: 'RUB'
+          },
+          vat_code: 1 // НДС 20% (код 1) - измените на нужный код НДС
+        }
+      ]
+    } : undefined;
+
+    const paymentData = {
       amount: {
         value: amount.toFixed(2),
         currency: 'RUB',
@@ -173,10 +194,21 @@ export default async function handler(req, res) {
         userId: userId || 'anonymous',
         email: email.trim(),
         sendEmail: 'true', // Сохраняем согласие на отправку email (всегда true, так как это обязательное поле)
+        sendReceipt: 'true', // Флаг для отправки информационного чека через Resend
         eventName: event.name,
         categoryName: category.name
       },
-    }, idempotenceKey);
+    };
+
+    // Добавляем receipt только если он настроен
+    if (receipt) {
+      paymentData.receipt = receipt;
+      console.log(`[${requestId}] Фискальный чек будет отправлен через ЮКассу на email: ${email.substring(0, 20)}...`);
+    } else {
+      console.log(`[${requestId}] Фискальный чек отключен (YOOKASSA_RECEIPT_ENABLED !== 'true'). Информационный чек будет отправлен через Resend.`);
+    }
+
+    const payment = await checkout.createPayment(paymentData, idempotenceKey);
 
     // Логируем ответ от ЮКассы для отладки
     console.log(`[${requestId}] YooKassa payment response:`, {
