@@ -99,20 +99,48 @@ function LegalInfo({ webApp }) {
         <h2 className="section-title">Реквизиты</h2>
         <div className="info-card">
           <div className="info-row">
-            <span className="info-label">Организация:</span>
-            <span className="info-value">ООО "Пример"</span>
+            <span className="info-label">Название организации:</span>
+            <span className="info-value">ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ "НЕВА ПУЛЬС"</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Юридический адрес:</span>
+            <span className="info-value">197374, РОССИЯ, Г.САНКТ-ПЕТЕРБУРГ, ВН.ТЕР.Г. МУНИЦИПАЛЬНЫЙ ОКРУГ ОЗЕРО ДОЛГОЕ, ДОР ТОРФЯНАЯ, Д. 17, К. 1, СТР. 1, КВ. 69</span>
           </div>
           <div className="info-row">
             <span className="info-label">ИНН:</span>
-            <span className="info-value">615527490218</span>
+            <span className="info-value">7814854075</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">КПП:</span>
+            <span className="info-value">781401001</span>
           </div>
           <div className="info-row">
             <span className="info-label">ОГРН:</span>
-            <span className="info-value">1234567890123</span>
+            <span className="info-value">1257800065148</span>
           </div>
           <div className="info-row">
-            <span className="info-label">Адрес:</span>
-            <span className="info-value">г. Санкт-Петербург, ул. Примерная, д. 1</span>
+            <span className="info-label">Расчетный счет:</span>
+            <span className="info-value">40702810410001939698</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Банк:</span>
+            <span className="info-value">АО «ТБанк»</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">БИК банка:</span>
+            <span className="info-value">044525974</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">ИНН банка:</span>
+            <span className="info-value">7710140679</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Корреспондентский счет:</span>
+            <span className="info-value">30101810145250000974</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Юридический адрес банка:</span>
+            <span className="info-value">127287, г. Москва, ул. Хуторская 2-я, д. 38А, стр. 26</span>
           </div>
         </div>
       </div>

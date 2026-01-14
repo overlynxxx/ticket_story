@@ -266,6 +266,7 @@
 }
 
 .save-button,
+.email-button,
 .wallet-button {
   flex: 1;
   min-width: 150px;
@@ -285,14 +286,20 @@
 }
 
 .save-button:hover,
+.email-button:hover,
 .wallet-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(0, 168, 255, 0.4);
 }
 
 .save-button:active,
+.email-button:active,
 .wallet-button:active {
   transform: translateY(0);
+}
+
+.email-button {
+  background: linear-gradient(135deg, #00a8ff 0%, #00d4ff 100%);
 }
 
 .wallet-button {
@@ -331,4 +338,108 @@
   .ticket-actions {
     display: none;
   }
+}
+
+/* Модальное окно для email */
+.email-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.email-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid rgba(0, 168, 255, 0.5);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(0, 168, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.email-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  color: #00a8ff;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 168, 255, 0.5);
+}
+
+.email-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(0, 168, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 16px;
+  margin-bottom: 20px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.email-input:focus {
+  outline: none;
+  border-color: #00a8ff;
+  box-shadow: 0 0 10px rgba(0, 168, 255, 0.3);
+}
+
+.email-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.email-modal-cancel,
+.email-modal-send {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.email-modal-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.email-modal-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.email-modal-send {
+  background: linear-gradient(135deg, #00a8ff 0%, #00d4ff 100%);
+  color: white;
+}
+
+.email-modal-send:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 168, 255, 0.4);
+}
+
+.email-modal-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

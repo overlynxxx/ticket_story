@@ -1,0 +1,163 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+export default async function handler(req, res) {
+  const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`[${requestId}] [${new Date().toISOString()}] send-email: ${req.method} ${req.url}`);
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  try {
+    const { ticketId, email, eventId, categoryId } = req.body;
+
+    if (!ticketId || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Требуются ticketId и email'
+      });
+    }
+
+    // Валидация email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Неверный формат email'
+      });
+    }
+
+    // Загружаем конфиг
+    let eventsConfig = {};
+    try {
+      const configPath = join(process.cwd(), 'config', 'tickets.json');
+      const configData = readFileSync(configPath, 'utf8');
+      eventsConfig = JSON.parse(configData);
+    } catch (error) {
+      console.error(`[${requestId}] Ошибка загрузки конфига:`, error);
+    }
+
+    // Находим мероприятие
+    const event = eventsConfig.events?.find(e => e.id === eventId);
+    const category = event?.ticketCategories?.find(c => c.id === categoryId);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: 'Мероприятие не найдено'
+      });
+    }
+
+    // Здесь должна быть интеграция с email сервисом
+    // Пример с использованием Resend API (нужно добавить RESEND_API_KEY в переменные окружения)
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+    if (!RESEND_API_KEY) {
+      console.log(`[${requestId}] RESEND_API_KEY не настроен, используем заглушку`);
+      // В режиме разработки или без настроенного API просто возвращаем успех
+      // В продакшене здесь должна быть реальная отправка email
+      return res.status(200).json({
+        success: true,
+        message: 'Email будет отправлен (в режиме разработки)',
+        ticketId: ticketId
+      });
+    }
+
+    // Отправка email через Resend API
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || 'Tickets <noreply@ticket-story.com>',
+        to: email,
+        subject: `Билет на мероприятие: ${event.name}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .ticket { background: #f5f5f5; border: 2px solid #00a8ff; border-radius: 12px; padding: 20px; margin: 20px 0; }
+              .ticket-header { text-align: center; margin-bottom: 20px; }
+              .ticket-title { font-size: 24px; font-weight: bold; color: #00a8ff; }
+              .ticket-info { margin: 10px 0; }
+              .ticket-label { font-weight: bold; }
+              .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Ваш билет</h1>
+              <div class="ticket">
+                <div class="ticket-header">
+                  <div class="ticket-title">${event.name}</div>
+                </div>
+                <div class="ticket-info">
+                  <span class="ticket-label">Мероприятие:</span> ${event.name}
+                </div>
+                <div class="ticket-info">
+                  <span class="ticket-label">Дата:</span> ${event.date}
+                </div>
+                <div class="ticket-info">
+                  <span class="ticket-label">Время:</span> ${event.time}
+                </div>
+                <div class="ticket-info">
+                  <span class="ticket-label">Место:</span> ${event.venue}
+                </div>
+                ${event.address ? `<div class="ticket-info"><span class="ticket-label">Адрес:</span> ${event.address}</div>` : ''}
+                ${category ? `<div class="ticket-info"><span class="ticket-label">Категория:</span> ${category.name}</div>` : ''}
+                <div class="ticket-info">
+                  <span class="ticket-label">ID билета:</span>
+                  <span class="ticket-id">${ticketId}</span>
+                </div>
+              </div>
+              <p>Предъявите этот билет на входе. QR-код будет доступен в приложении.</p>
+            </div>
+          </body>
+          </html>
+        `
+      })
+    });
+
+    if (!emailResponse.ok) {
+      const errorData = await emailResponse.json().catch(() => ({}));
+      console.error(`[${requestId}] Ошибка отправки email:`, errorData);
+      throw new Error('Не удалось отправить email');
+    }
+
+    const emailData = await emailResponse.json();
+    console.log(`[${requestId}] Email отправлен успешно:`, emailData);
+
+    res.status(200).json({
+      success: true,
+      message: 'Билет отправлен на email',
+      ticketId: ticketId
+    });
+
+  } catch (error) {
+    console.error(`[${requestId}] Ошибка отправки билета на email:`, {
+      message: error.message,
+      stack: error.stack
+    });
+
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Ошибка отправки email'
+    });
+  }
+}

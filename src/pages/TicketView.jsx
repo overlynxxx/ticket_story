@@ -14,6 +14,9 @@ function TicketView({ webApp, config }) {
   const ticketsParam = searchParams.get('tickets')
   const [currentTicketIndex, setCurrentTicketIndex] = useState(0)
   const ticketRef = useRef(null)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [email, setEmail] = useState('')
+  const [isSendingEmail, setIsSendingEmail] = useState(false)
   
   // Если есть несколько билетов, создаем массив ID
   const ticketIds = ticketsParam 
@@ -75,6 +78,52 @@ function TicketView({ webApp, config }) {
     } catch (error) {
       console.error('Ошибка сохранения изображения:', error)
       alert('Не удалось сохранить билет. Попробуйте еще раз.')
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!email || !email.includes('@')) {
+      alert('Пожалуйста, введите корректный email адрес')
+      return
+    }
+
+    setIsSendingEmail(true)
+    try {
+      const response = await fetch(`${API_URL}/api/ticket/${currentTicketId}/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ticketId: currentTicketId,
+          email: email,
+          eventId: eventId,
+          categoryId: categoryId
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        if (webApp) {
+          webApp.showAlert('Билет отправлен на email!')
+        } else {
+          alert('Билет отправлен на email!')
+        }
+        setShowEmailModal(false)
+        setEmail('')
+      } else {
+        throw new Error(data.error || 'Ошибка отправки email')
+      }
+    } catch (error) {
+      console.error('Ошибка отправки email:', error)
+      if (webApp) {
+        webApp.showAlert(`Ошибка: ${error.message || 'Не удалось отправить билет на email'}`)
+      } else {
+        alert(`Ошибка: ${error.message || 'Не удалось отправить билет на email'}`)
+      }
+    } finally {
+      setIsSendingEmail(false)
     }
   }
 
@@ -198,7 +247,45 @@ function TicketView({ webApp, config }) {
         <button className="save-button" onClick={handleSaveAsImage}>
           📷 Сохранить как фото
         </button>
+        <button className="email-button" onClick={() => setShowEmailModal(true)}>
+          📧 Отправить на email
+        </button>
       </div>
+
+      {showEmailModal && (
+        <div className="email-modal-overlay" onClick={() => setShowEmailModal(false)}>
+          <div className="email-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="email-modal-title">Отправить билет на email</h3>
+            <input
+              type="email"
+              className="email-input"
+              placeholder="Введите email адрес"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSendingEmail}
+            />
+            <div className="email-modal-buttons">
+              <button
+                className="email-modal-cancel"
+                onClick={() => {
+                  setShowEmailModal(false)
+                  setEmail('')
+                }}
+                disabled={isSendingEmail}
+              >
+                Отмена
+              </button>
+              <button
+                className="email-modal-send"
+                onClick={handleSendEmail}
+                disabled={isSendingEmail || !email}
+              >
+                {isSendingEmail ? 'Отправка...' : 'Отправить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
