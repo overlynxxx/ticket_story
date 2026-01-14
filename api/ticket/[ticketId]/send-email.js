@@ -82,6 +82,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // Генерируем QR-код для билета
+    const qrCodeDataUrl = await QRCode.toDataURL(ticketId, {
+      errorCorrectionLevel: 'M',
+      type: 'image/png',
+      width: 200,
+      margin: 2
+    });
+
     // Отправка email через Resend API
     const emailPayload = {
       from: EMAIL_FROM,
@@ -101,6 +109,8 @@ export default async function handler(req, res) {
               .ticket-info { margin: 10px 0; }
               .ticket-label { font-weight: bold; }
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
+              .qr-code { text-align: center; margin: 20px 0; }
+              .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; }
             </style>
           </head>
           <body>
@@ -128,8 +138,11 @@ export default async function handler(req, res) {
                   <span class="ticket-label">ID билета:</span>
                   <span class="ticket-id">${ticketId}</span>
                 </div>
+                <div class="qr-code">
+                  <img src="${qrCodeDataUrl}" alt="QR Code для билета ${ticketId}" />
+                </div>
               </div>
-              <p>Предъявите этот билет на входе. QR-код будет доступен в приложении.</p>
+              <p>Предъявите этот билет на входе. QR-код содержит информацию о билете.</p>
             </div>
           </body>
           </html>
