@@ -159,10 +159,17 @@ export default async function handler(req, res) {
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.json().catch(() => {
-        const text = await emailResponse.text().catch(() => '');
-        return { rawError: text };
-      });
+      let errorData = {};
+      try {
+        errorData = await emailResponse.json();
+      } catch (jsonError) {
+        try {
+          const text = await emailResponse.text();
+          errorData = { rawError: text };
+        } catch (textError) {
+          errorData = { rawError: 'Unknown error' };
+        }
+      }
       console.error(`[${requestId}] ❌ Ошибка отправки email:`, {
         status: emailResponse.status,
         statusText: emailResponse.statusText,
