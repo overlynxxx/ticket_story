@@ -9,7 +9,8 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
     try {
       const doc = new PDFDocument({
         size: [400, 600],
-        margin: 30
+        margin: 40,
+        autoFirstPage: true
       });
       
       const chunks = [];
@@ -20,61 +21,99 @@ async function generateTicketPDF(ticketId, event, category, qrCodeBuffer) {
       });
       doc.on('error', reject);
       
-      // Заголовок
-      doc.fontSize(24)
-         .fillColor('#00a8ff')
-         .text(event?.name || 'Мероприятие', { align: 'center' });
+      // Используем стандартный шрифт, который поддерживает кириллицу
+      // PDFKit по умолчанию использует Helvetica, но для кириллицы лучше использовать встроенные шрифты
       
-      doc.moveDown(1);
+      // Заголовок
+      doc.fontSize(22)
+         .fillColor('#00a8ff')
+         .text(event?.name || 'Мероприятие', {
+           align: 'center',
+           width: doc.page.width - 80
+         });
+      
+      doc.moveDown(1.5);
       
       // Информация о мероприятии
-      doc.fontSize(12)
-         .fillColor('#333');
+      doc.fontSize(11)
+         .fillColor('#333333');
+      
+      const lineHeight = 16;
+      let currentY = doc.y;
       
       if (event?.date) {
-        doc.text(`Дата: ${event.date}`, { align: 'left' });
+        doc.text(`Дата: ${event.date}`, {
+          align: 'left',
+          width: doc.page.width - 80
+        });
+        currentY += lineHeight;
       }
       if (event?.time) {
-        doc.text(`Время: ${event.time}`, { align: 'left' });
+        doc.text(`Время: ${event.time}`, {
+          align: 'left',
+          width: doc.page.width - 80
+        });
+        currentY += lineHeight;
       }
       if (event?.venue) {
-        doc.text(`Место: ${event.venue}`, { align: 'left' });
+        doc.text(`Место: ${event.venue}`, {
+          align: 'left',
+          width: doc.page.width - 80
+        });
+        currentY += lineHeight;
       }
       if (event?.address) {
-        doc.text(`Адрес: ${event.address}`, { align: 'left' });
+        doc.text(`Адрес: ${event.address}`, {
+          align: 'left',
+          width: doc.page.width - 80
+        });
+        currentY += lineHeight;
       }
       if (category) {
-        doc.text(`Категория: ${category.name}`, { align: 'left' });
+        doc.text(`Категория: ${category.name}`, {
+          align: 'left',
+          width: doc.page.width - 80
+        });
+        currentY += lineHeight;
       }
       
-      doc.moveDown(1);
+      doc.moveDown(1.5);
       
       // ID билета
-      doc.fontSize(10)
-         .fillColor('#666')
-         .text(`ID билета: ${ticketId}`, { align: 'left' });
+      doc.fontSize(9)
+         .fillColor('#666666')
+         .text(`ID билета: ${ticketId}`, {
+           align: 'left',
+           width: doc.page.width - 80
+         });
       
       doc.moveDown(2);
       
       // QR-код (центрируем)
-      const qrSize = 150;
+      const qrSize = 160;
       const pageWidth = doc.page.width;
       const qrX = (pageWidth - qrSize) / 2;
       const qrY = doc.y;
       
       doc.image(qrCodeBuffer, qrX, qrY, {
         width: qrSize,
-        height: qrSize,
-        align: 'center'
+        height: qrSize
       });
       
-      doc.moveDown(2);
+      // Перемещаем курсор после QR-кода
+      doc.y = qrY + qrSize + 20;
       
       // Инструкция
-      doc.fontSize(10)
-         .fillColor('#666')
-         .text('Предъявите этот билет на входе.', { align: 'center' });
-      doc.text('QR-код содержит информацию о билете.', { align: 'center' });
+      doc.fontSize(9)
+         .fillColor('#666666')
+         .text('Предъявите этот билет на входе.', {
+           align: 'center',
+           width: doc.page.width - 80
+         });
+      doc.text('QR-код содержит информацию о билете.', {
+        align: 'center',
+        width: doc.page.width - 80
+      });
       
       doc.end();
     } catch (error) {
@@ -163,16 +202,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Генерируем QR-код для билета (два варианта для максимальной совместимости)
+    // Генерируем QR-код только для PDF
     const qrCodeBuffer = await QRCode.toBuffer(ticketId, {
       errorCorrectionLevel: 'M',
       type: 'image/png',
       width: 200,
       margin: 2
     });
-    const qrCodeBase64 = qrCodeBuffer.toString('base64');
-    const qrCodeDataUrl = `data:image/png;base64,${qrCodeBase64}`;
-    const qrCodeCid = `qr-${ticketId.replace(/[^a-zA-Z0-9]/g, '-')}`;
     
     // Генерируем PDF билета
     let ticketPDFBase64 = null;
@@ -188,13 +224,8 @@ export default async function handler(req, res) {
       // Продолжаем без PDF, отправляем только HTML
     }
     
-    const attachments = [
-      {
-        filename: `qr-${ticketId}.png`,
-        content: qrCodeBase64,
-        cid: qrCodeCid
-      }
-    ];
+    // Только PDF как attachment
+    const attachments = [];
     
     // Добавляем PDF билета как attachment, если он был успешно сгенерирован
     if (ticketPDFBase64) {
@@ -223,15 +254,13 @@ export default async function handler(req, res) {
               .ticket-info { margin: 10px 0; }
               .ticket-label { font-weight: bold; }
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
-              .qr-code { text-align: center; margin: 20px 0; }
-              .qr-code img { max-width: 200px; height: auto; border: 2px solid #00a8ff; border-radius: 8px; padding: 10px; background: white; display: block; margin: 0 auto; }
               .pdf-notice { background: #e3f2fd; border-left: 4px solid #00a8ff; padding: 12px; margin: 20px 0; border-radius: 4px; }
             </style>
           </head>
           <body>
             <div class="container">
               <h1>Ваш билет</h1>
-              ${ticketPDFBase64 ? '<div class="pdf-notice"><strong>📎 Полный билет в формате PDF прикреплен к письму.</strong></div>' : ''}
+              ${ticketPDFBase64 ? '<div class="pdf-notice"><strong>📎 Полный билет в формате PDF прикреплен к письму.</strong><br>Откройте PDF файл для просмотра билета с QR-кодом.</div>' : ''}
               <div class="ticket">
                 <div class="ticket-header">
                   <div class="ticket-title">${event.name}</div>
@@ -254,14 +283,8 @@ export default async function handler(req, res) {
                   <span class="ticket-label">ID билета:</span>
                   <span class="ticket-id">${ticketId}</span>
                 </div>
-                <div class="qr-code">
-                  <!-- Пробуем CID (для современных клиентов), если не работает - показывается base64 fallback -->
-                  <img src="cid:${qrCodeCid}" 
-                       onerror="this.onerror=null; this.src='${qrCodeDataUrl}'" 
-                       alt="QR Code для билета ${ticketId}" />
-                </div>
               </div>
-              <p>Предъявите этот билет на входе. QR-код содержит информацию о билете.</p>
+              <p>Предъявите билет на входе. Полный билет с QR-кодом находится в прикрепленном PDF файле.</p>
             </div>
           </body>
           </html>
