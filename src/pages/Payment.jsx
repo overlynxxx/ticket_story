@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import Footer from '../components/Footer'
 import PaymentQR from '../components/PaymentQR'
 import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
 import { API_URL } from '../utils/api'
@@ -231,7 +230,6 @@ function Payment({ webApp, config }) {
         <button onClick={() => navigate('/')} className="back-button">
           Вернуться назад
         </button>
-        <Footer />
       </div>
     )
   }
@@ -243,7 +241,6 @@ function Payment({ webApp, config }) {
         <button onClick={() => navigate('/')} className="back-button">
           Вернуться назад
         </button>
-        <Footer />
       </div>
     )
   }
@@ -318,8 +315,6 @@ function Payment({ webApp, config }) {
           onPaymentCancel={handlePaymentCancel}
         />
       )}
-
-      <Footer />
     </div>
   )
 }

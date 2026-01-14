@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Footer from '../components/Footer'
 import './TicketSelection.css'
 
 function TicketSelection({ webApp, config }) {
@@ -23,7 +22,6 @@ function TicketSelection({ webApp, config }) {
         <button onClick={() => navigate('/')} className="back-button">
           Вернуться назад
         </button>
-        <Footer />
       </div>
     )
   }
@@ -35,7 +33,6 @@ function TicketSelection({ webApp, config }) {
         <button onClick={() => navigate('/')} className="back-button">
           Вернуться назад
         </button>
-        <Footer />
       </div>
     )
   }
@@ -95,7 +92,6 @@ function TicketSelection({ webApp, config }) {
       <button className="purchase-button" onClick={handlePurchase}>
         Перейти к оплате
       </button>
-      <Footer />
     </div>
   )
 }

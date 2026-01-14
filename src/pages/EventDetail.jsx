@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Footer from '../components/Footer'
 import './EventDetail.css'
 
 function EventDetail({ webApp, config }) {
@@ -27,7 +26,6 @@ function EventDetail({ webApp, config }) {
             Вернуться назад
           </button>
         </div>
-        <Footer />
       </div>
     )
   }
@@ -141,8 +139,6 @@ function EventDetail({ webApp, config }) {
           </div>
         </div>
       )}
-
-      <Footer />
     </div>
   )
 }
