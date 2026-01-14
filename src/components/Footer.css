@@ -1,53 +1,39 @@
 .app-footer {
-  width: 100%;
-  padding: 20px;
   margin-top: auto;
+  padding: 20px;
+  text-align: center;
   background: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid rgba(0, 168, 255, 0.2);
+  border-top: 1px solid rgba(0, 168, 255, 0.3);
   backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  box-shadow: 0 -4px 15px rgba(0, 168, 255, 0.1);
 }
 
 .footer-content {
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.footer-inn {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
+  align-items: center;
 }
 
-.footer-label {
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.footer-value {
-  font-weight: 600;
+.footer-link {
   color: #00a8ff;
-  text-shadow: 0 0 8px rgba(0, 168, 255, 0.4);
-  font-family: 'Courier New', monospace;
-  letter-spacing: 1px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 8px rgba(0, 168, 255, 0.6);
+  padding: 8px 16px;
+  border-radius: 8px;
 }
 
-/* Адаптивность */
-@media (max-width: 480px) {
-  .app-footer {
-    padding: 16px;
-  }
+.footer-link:hover {
+  color: #00d4ff;
+  text-shadow: 0 0 12px rgba(0, 168, 255, 0.8);
+  background: rgba(0, 168, 255, 0.1);
+  transform: translateY(-2px);
+}
 
-  .footer-inn {
-    font-size: 12px;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .footer-value {
-    font-size: 14px;
-  }
+.footer-link:active {
+  transform: translateY(0);
 }

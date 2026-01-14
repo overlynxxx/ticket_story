@@ -1,13 +1,13 @@
+import { Link } from 'react-router-dom'
 import './Footer.css'
 
 function Footer() {
   return (
     <footer className="app-footer">
       <div className="footer-content">
-        <div className="footer-inn">
-          <span className="footer-label">ИНН:</span>
-          <span className="footer-value">615527490218</span>
-        </div>
+        <Link to="/legal" className="footer-link">
+          Юридическая информация
+        </Link>
       </div>
     </footer>
   )

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import PaymentQR from '../components/PaymentQR'
+import Footer from '../components/Footer'
 import { createYooKassaPayment, getPaymentQRCode, getPaymentUrl } from '../utils/yookassa'
 import { API_URL } from '../utils/api'
 import './Payment.css'
@@ -315,6 +316,8 @@ function Payment({ webApp, config }) {
           onPaymentCancel={handlePaymentCancel}
         />
       )}
+
+      <Footer />
     </div>
   )
 }
