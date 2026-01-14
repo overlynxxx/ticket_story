@@ -338,38 +338,22 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
     try {
       console.log(`[${requestId}] Sending ticket ${ticketId} to ${email}`);
       
-      // Генерируем QR-код только для PDF
+      // Генерируем QR-код для вложения
       const qrCodeBuffer = await QRCode.toBuffer(ticketId, {
         errorCorrectionLevel: 'M',
         type: 'image/png',
-        width: 200,
+        width: 300,
         margin: 2
       });
+      const qrCodeBase64 = qrCodeBuffer.toString('base64');
       
-      // Генерируем PDF билета
-      let ticketPDFBase64 = null;
-      try {
-        const ticketPDFBuffer = await generateTicketPDF(ticketId, event, category, qrCodeBuffer);
-        ticketPDFBase64 = ticketPDFBuffer.toString('base64');
-        console.log(`[${requestId}] ✅ PDF билета сгенерирован для ${ticketId}, размер: ${ticketPDFBuffer.length} байт`);
-      } catch (pdfError) {
-        console.error(`[${requestId}] ❌ Ошибка генерации PDF для ${ticketId}:`, {
-          message: pdfError.message,
-          stack: pdfError.stack
-        });
-        // Продолжаем без PDF, отправляем только HTML
-      }
-      
-      // Только PDF как attachment
-      const attachments = [];
-      
-      // Добавляем PDF билета как attachment, если он был успешно сгенерирован
-      if (ticketPDFBase64) {
-        attachments.push({
-          filename: `Билет-${ticketId}.pdf`,
-          content: ticketPDFBase64
-        });
-      }
+      // Только QR-код как attachment
+      const attachments = [
+        {
+          filename: `QR-код-билета-${ticketId}.png`,
+          content: qrCodeBase64
+        }
+      ];
       
       const emailPayload = {
         from: EMAIL_FROM,
@@ -389,13 +373,19 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
               .ticket-info { margin: 10px 0; }
               .ticket-label { font-weight: bold; }
               .ticket-id { font-family: monospace; background: #fff; padding: 5px 10px; border-radius: 4px; }
-              .pdf-notice { background: #e3f2fd; border-left: 4px solid #00a8ff; padding: 12px; margin: 20px 0; border-radius: 4px; }
+              .qr-notice { background: #e3f2fd; border-left: 4px solid #00a8ff; padding: 15px; margin: 20px 0; border-radius: 4px; }
+              .qr-notice strong { display: block; margin-bottom: 8px; color: #00a8ff; }
+              .qr-notice p { margin: 5px 0; color: #333; }
             </style>
           </head>
           <body>
             <div class="container">
               <h1>Ваш билет</h1>
-              ${ticketPDFBase64 ? '<div class="pdf-notice"><strong>📎 Полный билет в формате PDF прикреплен к письму.</strong><br>Откройте PDF файл для просмотра билета с QR-кодом.</div>' : ''}
+              <div class="qr-notice">
+                <strong>📎 QR-код вашего билета прикреплен к письму</strong>
+                <p>Откройте вложение <strong>QR-код-билета-${ticketId}.png</strong> для просмотра QR-кода.</p>
+                <p>QR-код необходим для входа на мероприятие. Сохраните его на телефон или распечатайте.</p>
+              </div>
               <div class="ticket">
                 <div class="ticket-header">
                   <div class="ticket-title">${event?.name || 'Мероприятие'}</div>
@@ -413,7 +403,7 @@ async function sendTicketsToEmailAsync(ticketIds, email, eventId, categoryId, re
                   <span class="ticket-id">${ticketId}</span>
                 </div>
               </div>
-              <p>Предъявите билет на входе. Полный билет с QR-кодом находится в прикрепленном PDF файле.</p>
+              <p style="margin-top: 20px; color: #666; font-size: 14px;">Предъявите QR-код на входе. QR-код находится во вложении к этому письму.</p>
             </div>
           </body>
           </html>
