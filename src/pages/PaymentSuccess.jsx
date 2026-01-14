@@ -66,12 +66,23 @@ function PaymentSuccess({ webApp, config }) {
 
   // Функция для отправки билетов на email
   const sendTicketsToEmail = async (ticketIds, email, eventId, categoryId) => {
-    console.log('[PaymentSuccess] Sending tickets to email:', { ticketIds, email, eventId, categoryId })
+    console.log('[PaymentSuccess] 📧 sendTicketsToEmail called:', {
+      ticketIds,
+      email: email?.substring(0, 20) + '...',
+      eventId,
+      categoryId,
+      ticketCount: ticketIds.length,
+      timestamp: new Date().toISOString()
+    })
     
     // Отправляем каждый билет отдельно
     const sendPromises = ticketIds.map(async (ticketId) => {
       try {
-        const response = await fetch(`${API_URL}/api/ticket/${ticketId}/send-email`, {
+        console.log(`[PaymentSuccess] Sending ticket ${ticketId} to ${email}`)
+        const url = `${API_URL}/api/ticket/${ticketId}/send-email`
+        console.log(`[PaymentSuccess] Request URL: ${url}`)
+        
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -84,22 +95,64 @@ function PaymentSuccess({ webApp, config }) {
           })
         })
 
+        console.log(`[PaymentSuccess] Response for ${ticketId}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          contentType: response.headers.get('content-type')
+        })
+
+        const contentType = response.headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) {
+          const text = await response.text()
+          console.error(`[PaymentSuccess] ❌ Non-JSON response for ${ticketId}:`, {
+            status: response.status,
+            contentType,
+            textPreview: text.substring(0, 200)
+          })
+          return { success: false, error: 'Invalid response format' }
+        }
+
         const data = await response.json()
+        console.log(`[PaymentSuccess] Response data for ${ticketId}:`, data)
+        
         if (data.success) {
-          console.log(`[PaymentSuccess] Ticket ${ticketId} sent to ${email}`)
+          console.log(`[PaymentSuccess] ✅ Ticket ${ticketId} sent to ${email}`)
         } else {
-          console.error(`[PaymentSuccess] Failed to send ticket ${ticketId}:`, data.error)
+          console.error(`[PaymentSuccess] ❌ Failed to send ticket ${ticketId}:`, data.error)
         }
         return data
       } catch (error) {
-        console.error(`[PaymentSuccess] Error sending ticket ${ticketId}:`, error)
+        console.error(`[PaymentSuccess] ❌ Error sending ticket ${ticketId}:`, {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
         return { success: false, error: error.message }
       }
     })
 
     const results = await Promise.allSettled(sendPromises)
     const successCount = results.filter(r => r.status === 'fulfilled' && r.value?.success).length
-    console.log(`[PaymentSuccess] Sent ${successCount} of ${ticketIds.length} tickets to email`)
+    const failedCount = ticketIds.length - successCount
+    
+    console.log(`[PaymentSuccess] 📊 Email sending summary:`, {
+      total: ticketIds.length,
+      success: successCount,
+      failed: failedCount,
+      timestamp: new Date().toISOString()
+    })
+    
+    if (failedCount > 0) {
+      console.error('[PaymentSuccess] ❌ Failed tickets details:', results
+        .map((r, i) => ({ ticketId: ticketIds[i], result: r }))
+        .filter(({ result }) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value?.success))
+        .map(({ ticketId, result }) => ({
+          ticketId,
+          error: result.status === 'rejected' ? result.reason : result.value?.error
+        }))
+      )
+    }
   }
 
   const checkPaymentAndRedirect = async (actualPaymentId) => {
@@ -190,12 +243,38 @@ function PaymentSuccess({ webApp, config }) {
         })()
         
         // Автоматически отправляем билеты на email, если было согласие
+        console.log('[PaymentSuccess] Email sending check:', {
+          sendEmail,
+          hasEmail: !!email,
+          email: email ? email.substring(0, 20) + '...' : 'none',
+          ticketCount: ticketIds.length,
+          shouldSend: sendEmail && email && ticketIds.length > 0
+        });
+        
         if (sendEmail && email && ticketIds.length > 0) {
-          console.log('[PaymentSuccess] Sending tickets to email:', email, ticketIds)
+          console.log('[PaymentSuccess] ✅ Auto-sending tickets to email:', {
+            email: email.substring(0, 20) + '...',
+            ticketCount: ticketIds.length,
+            ticketIds: ticketIds
+          })
           // Отправляем все билеты асинхронно (не блокируем редирект)
-          sendTicketsToEmail(ticketIds, email, eventId, categoryId).catch(err => {
-            console.error('[PaymentSuccess] Error sending tickets to email:', err)
-            // Не показываем ошибку пользователю, чтобы не прерывать процесс
+          sendTicketsToEmail(ticketIds, email, eventId, categoryId)
+            .then(() => {
+              console.log('[PaymentSuccess] ✅ All tickets sent to email successfully')
+            })
+            .catch(err => {
+              console.error('[PaymentSuccess] ❌ Error sending tickets to email:', {
+                message: err.message,
+                stack: err.stack
+              })
+              // Не показываем ошибку пользователю, чтобы не прерывать процесс
+            })
+        } else {
+          console.log('[PaymentSuccess] ⏭️ Skipping email sending:', {
+            reason: !sendEmail ? 'no consent' : !email ? 'no email' : 'no tickets',
+            sendEmail,
+            hasEmail: !!email,
+            ticketCount: ticketIds.length
           })
         }
         

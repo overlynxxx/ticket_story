@@ -69,9 +69,30 @@ function Payment({ webApp, config }) {
 
     // Если цена 0 (бесплатный билет), сразу выдаем билет
     if (totalPrice === 0) {
-      const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const currentEventId = eventId || event?.id
-      navigate(`/ticket/${ticketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}`)
+      // Генерируем билеты
+      const ticketIds = []
+      const baseTimestamp = Date.now()
+      for (let i = 0; i < quantity; i++) {
+        const randomStr = Math.random().toString(36).substr(2, 9)
+        const ticketId = `TICKET-${baseTimestamp}-${randomStr}-${i}`
+        ticketIds.push(ticketId)
+      }
+      
+      console.log('[Payment] Free ticket - generated tickets:', ticketIds)
+      
+      // Автоматически отправляем билеты на email, если было согласие
+      if (consentChecked && email.trim()) {
+        console.log('[Payment] Free ticket - sending to email:', email.trim())
+        // Отправляем билеты асинхронно (не блокируем навигацию)
+        sendTicketsToEmail(ticketIds, email.trim(), currentEventId, categoryId).catch(err => {
+          console.error('[Payment] Error sending free tickets to email:', err)
+        })
+      }
+      
+      const firstTicketId = ticketIds[0]
+      const ticketUrl = `/ticket/${firstTicketId}?category=${categoryId}&quantity=${quantity}&eventId=${currentEventId}&tickets=${ticketIds.join(',')}`
+      navigate(ticketUrl)
       return
     }
 
@@ -251,6 +272,69 @@ function Payment({ webApp, config }) {
   const handlePaymentCancel = () => {
     setShowQR(false)
     setIsProcessing(false)
+  }
+
+  // Функция для отправки билетов на email
+  const sendTicketsToEmail = async (ticketIds, email, eventId, categoryId) => {
+    console.log('[Payment] sendTicketsToEmail called:', { ticketIds, email, eventId, categoryId })
+    
+    const sendPromises = ticketIds.map(async (ticketId) => {
+      try {
+        console.log(`[Payment] Sending ticket ${ticketId} to ${email}`)
+        const response = await fetch(`${API_URL}/api/ticket/${ticketId}/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ticketId: ticketId,
+            email: email,
+            eventId: eventId,
+            categoryId: categoryId
+          })
+        })
+
+        const contentType = response.headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) {
+          const text = await response.text()
+          console.error(`[Payment] Non-JSON response for ticket ${ticketId}:`, {
+            status: response.status,
+            contentType,
+            textPreview: text.substring(0, 200)
+          })
+          return { success: false, error: 'Invalid response format' }
+        }
+
+        const data = await response.json()
+        console.log(`[Payment] Response for ticket ${ticketId}:`, data)
+        
+        if (data.success) {
+          console.log(`[Payment] ✅ Ticket ${ticketId} sent to ${email}`)
+        } else {
+          console.error(`[Payment] ❌ Failed to send ticket ${ticketId}:`, data.error)
+        }
+        return data
+      } catch (error) {
+        console.error(`[Payment] ❌ Error sending ticket ${ticketId}:`, {
+          message: error.message,
+          stack: error.stack
+        })
+        return { success: false, error: error.message }
+      }
+    })
+
+    const results = await Promise.allSettled(sendPromises)
+    const successCount = results.filter(r => r.status === 'fulfilled' && r.value?.success).length
+    const failedCount = ticketIds.length - successCount
+    
+    console.log(`[Payment] Email sending summary: ${successCount} sent, ${failedCount} failed out of ${ticketIds.length} total`)
+    
+    if (failedCount > 0) {
+      console.error('[Payment] Failed tickets:', results
+        .map((r, i) => ({ ticketId: ticketIds[i], result: r }))
+        .filter(({ result }) => result.status === 'rejected' || (result.status === 'fulfilled' && !result.value?.success))
+      )
+    }
   }
 
   // Настройка кнопки Telegram

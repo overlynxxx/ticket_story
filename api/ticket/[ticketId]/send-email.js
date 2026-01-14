@@ -61,29 +61,31 @@ export default async function handler(req, res) {
     // Здесь должна быть интеграция с email сервисом
     // Пример с использованием Resend API (нужно добавить RESEND_API_KEY в переменные окружения)
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const EMAIL_FROM = process.env.EMAIL_FROM || 'Tickets <noreply@ticket-story.com>';
+
+    console.log(`[${requestId}] Email sending config:`, {
+      hasResendKey: !!RESEND_API_KEY,
+      resendKeyLength: RESEND_API_KEY?.length || 0,
+      resendKeyPrefix: RESEND_API_KEY ? RESEND_API_KEY.substring(0, 10) + '...' : 'none',
+      emailFrom: EMAIL_FROM,
+      targetEmail: email?.substring(0, 20) + '...',
+      ticketId: ticketId
+    });
 
     if (!RESEND_API_KEY) {
-      console.log(`[${requestId}] RESEND_API_KEY не настроен, используем заглушку`);
-      // В режиме разработки или без настроенного API просто возвращаем успех
-      // В продакшене здесь должна быть реальная отправка email
-      return res.status(200).json({
-        success: true,
-        message: 'Email будет отправлен (в режиме разработки)',
+      console.error(`[${requestId}] ❌ RESEND_API_KEY не настроен!`);
+      return res.status(500).json({
+        success: false,
+        error: 'Email сервис не настроен. Обратитесь в поддержку.',
         ticketId: ticketId
       });
     }
 
     // Отправка email через Resend API
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`
-      },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'Tickets <noreply@ticket-story.com>',
-        to: email,
-        subject: `Билет на мероприятие: ${event.name}`,
+    const emailPayload = {
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Билет на мероприятие: ${event.name}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -131,17 +133,51 @@ export default async function handler(req, res) {
           </body>
           </html>
         `
-      })
+    };
+
+    console.log(`[${requestId}] Sending email via Resend API:`, {
+      from: emailPayload.from,
+      to: emailPayload.to,
+      subject: emailPayload.subject,
+      htmlLength: emailPayload.html.length
+    });
+
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`
+      },
+      body: JSON.stringify(emailPayload)
+    });
+
+    console.log(`[${requestId}] Resend API response:`, {
+      status: emailResponse.status,
+      statusText: emailResponse.statusText,
+      ok: emailResponse.ok,
+      headers: Object.fromEntries(emailResponse.headers.entries())
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.json().catch(() => ({}));
-      console.error(`[${requestId}] Ошибка отправки email:`, errorData);
-      throw new Error('Не удалось отправить email');
+      const errorData = await emailResponse.json().catch(() => {
+        const text = await emailResponse.text().catch(() => '');
+        return { rawError: text };
+      });
+      console.error(`[${requestId}] ❌ Ошибка отправки email:`, {
+        status: emailResponse.status,
+        statusText: emailResponse.statusText,
+        error: errorData
+      });
+      throw new Error(`Не удалось отправить email: ${errorData.message || errorData.rawError || 'Unknown error'}`);
     }
 
     const emailData = await emailResponse.json();
-    console.log(`[${requestId}] Email отправлен успешно:`, emailData);
+    console.log(`[${requestId}] ✅ Email отправлен успешно:`, {
+      id: emailData.id,
+      from: emailData.from,
+      to: emailData.to,
+      createdAt: emailData.created_at
+    });
 
     res.status(200).json({
       success: true,
