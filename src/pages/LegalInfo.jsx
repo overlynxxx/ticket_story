@@ -15,31 +15,25 @@ function LegalInfo({ webApp }) {
     }
   }, [webApp, navigate])
 
-  // Список документов (можно расширить)
+  // Список документов
   const documents = [
-    {
-      id: 'terms',
-      title: 'Пользовательское соглашение',
-      description: 'Условия использования сервиса',
-      url: '/documents/terms.pdf' // Замените на реальный URL
-    },
-    {
-      id: 'privacy',
-      title: 'Политика конфиденциальности',
-      description: 'Как мы обрабатываем ваши данные',
-      url: '/documents/privacy.pdf' // Замените на реальный URL
-    },
-    {
-      id: 'refund',
-      title: 'Правила возврата',
-      description: 'Условия возврата билетов',
-      url: '/documents/refund.pdf' // Замените на реальный URL
-    },
     {
       id: 'offer',
       title: 'Публичная оферта',
-      description: 'Договор публичной оферты',
-      url: '/documents/offer.pdf' // Замените на реальный URL
+      description: 'Договор публичной оферты на продажу билетов',
+      url: '/documents/02_Публичная_оферта_билеты_Tupik_Нева_Пульс.pdf'
+    },
+    {
+      id: 'refund',
+      title: 'Политика возврата',
+      description: 'Условия возврата билетов',
+      url: '/documents/03_Политика_возврата_билетов_Tupik_Нева_Пульс.pdf'
+    },
+    {
+      id: 'privacy',
+      title: 'Политика обработки персональных данных',
+      description: 'Как мы обрабатываем ваши персональные данные',
+      url: '/documents/04_Политика_ПДн_Tupik_Нева_Пульс.pdf'
     }
   ]
 
