@@ -166,7 +166,15 @@ export default async function handler(req, res) {
     // Подготовка данных для фискального чека (54-ФЗ)
     // ВАЖНО: Для работы фискальных чеков нужна настройка онлайн-кассы и ОФД в ЮКассе
     // Если онлайн-касса не настроена, параметр receipt будет проигнорирован
-    const receipt = process.env.YOOKASSA_RECEIPT_ENABLED === 'true' ? {
+    const receiptEnabled = process.env.YOOKASSA_RECEIPT_ENABLED === 'true';
+    console.log(`[${requestId}] Receipt configuration check:`, {
+      YOOKASSA_RECEIPT_ENABLED: process.env.YOOKASSA_RECEIPT_ENABLED,
+      receiptEnabled: receiptEnabled,
+      envValue: process.env.YOOKASSA_RECEIPT_ENABLED,
+      type: typeof process.env.YOOKASSA_RECEIPT_ENABLED
+    });
+
+    const receipt = receiptEnabled ? {
       customer: {
         email: email.trim()
       },
@@ -182,6 +190,18 @@ export default async function handler(req, res) {
         }
       ]
     } : undefined;
+
+    console.log(`[${requestId}] Receipt object:`, receipt ? {
+      hasReceipt: true,
+      customerEmail: receipt.customer?.email?.substring(0, 20) + '...',
+      itemsCount: receipt.items?.length,
+      firstItem: receipt.items?.[0] ? {
+        description: receipt.items[0].description,
+        quantity: receipt.items[0].quantity,
+        amount: receipt.items[0].amount,
+        vat_code: receipt.items[0].vat_code
+      } : null
+    } : { hasReceipt: false });
 
     const paymentData = {
       amount: {
@@ -213,9 +233,13 @@ export default async function handler(req, res) {
     // Добавляем receipt только если он настроен
     if (receipt) {
       paymentData.receipt = receipt;
-      console.log(`[${requestId}] Фискальный чек будет отправлен через ЮКассу на email: ${email.substring(0, 20)}...`);
+      console.log(`[${requestId}] ✅ Фискальный чек будет отправлен через ЮКассу на email: ${email.substring(0, 20)}...`);
+      console.log(`[${requestId}] Receipt data added to payment:`, {
+        customer: paymentData.receipt.customer,
+        itemsCount: paymentData.receipt.items.length
+      });
     } else {
-      console.log(`[${requestId}] Фискальный чек отключен (YOOKASSA_RECEIPT_ENABLED !== 'true'). Информационный чек будет отправлен через Resend.`);
+      console.log(`[${requestId}] ⚠️ Фискальный чек отключен (YOOKASSA_RECEIPT_ENABLED !== 'true'). Информационный чек будет отправлен через Resend.`);
     }
 
     const payment = await checkout.createPayment(paymentData, idempotenceKey);
@@ -227,8 +251,26 @@ export default async function handler(req, res) {
       confirmation: payment.confirmation,
       confirmationUrl: payment.confirmation?.confirmation_url,
       confirmationData: payment.confirmation?.confirmation_data,
-      returnUrl: returnUrl
+      returnUrl: returnUrl,
+      receipt: payment.receipt || 'not provided in response',
+      hasReceipt: !!payment.receipt
     });
+
+    // Проверяем, был ли receipt принят ЮКассой
+    if (receipt && !payment.receipt) {
+      console.warn(`[${requestId}] ⚠️ WARNING: Receipt was sent but not returned in payment response. This might mean:`);
+      console.warn(`[${requestId}]   1. Online cash register is not configured in YooKassa`);
+      console.warn(`[${requestId}]   2. OFD (Operator of Fiscal Data) is not connected`);
+      console.warn(`[${requestId}]   3. Receipt sending is disabled in YooKassa settings`);
+      console.warn(`[${requestId}]   4. Using test shop (receipts may not work in test mode)`);
+    } else if (receipt && payment.receipt) {
+      console.log(`[${requestId}] ✅ Receipt accepted by YooKassa:`, {
+        receiptId: payment.receipt.id,
+        status: payment.receipt.status,
+        fiscalDocumentNumber: payment.receipt.fiscal_document_number,
+        fiscalStorageNumber: payment.receipt.fiscal_storage_number
+      });
+    }
 
     // Для СБП используем confirmation_url - это ссылка на страницу ЮКассы с QR-кодом
     // На странице ЮКассы пользователь увидит QR-код (на компьютере) или список банков (на мобильном)
