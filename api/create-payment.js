@@ -186,9 +186,18 @@ export default async function handler(req, res) {
             value: amount.toFixed(2),
             currency: 'RUB'
           },
-          vat_code: 1 // НДС 20% (код 1) - измените на нужный код НДС
+          vat_code: 1, // Без НДС (код 1)
+          payment_subject: 'service', // Услуга
+          payment_mode: 'full_payment', // Полный расчет
+          measure: 'piece' // Штука, единица товара
         }
-      ]
+      ],
+      settlements: [
+        {
+          type: 'cashless' // Безналичный расчет
+        }
+      ],
+      timezone: 2 // Москва, Санкт-Петербург, Нижний Новгород (UTC+3, MCK)
     } : undefined;
 
     console.log(`[${requestId}] Receipt object:`, receipt ? {
