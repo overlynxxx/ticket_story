@@ -73,8 +73,24 @@ export default async function handler(req, res) {
       id: payment.id,
       status: payment.status,
       paid: payment.paid,
-      hasMetadata: !!payment.metadata
+      hasMetadata: !!payment.metadata,
+      hasReceipt: !!payment.receipt,
+      receiptStatus: payment.receipt?.status,
+      receiptId: payment.receipt?.id
     });
+    
+    // Проверяем receipt после успешной оплаты
+    if (payment.status === 'succeeded' && payment.receipt) {
+      console.log(`[${requestId}] ✅ Receipt found after payment completion:`, {
+        receiptId: payment.receipt.id,
+        status: payment.receipt.status,
+        fiscalDocumentNumber: payment.receipt.fiscal_document_number,
+        fiscalStorageNumber: payment.receipt.fiscal_storage_number,
+        registeredAt: payment.receipt.registered_at
+      });
+    } else if (payment.status === 'succeeded' && !payment.receipt) {
+      console.warn(`[${requestId}] ⚠️ Payment succeeded but no receipt found. Check YooKassa settings.`);
+    }
 
     // Если платеж успешен, создаем билеты
     let ticketIds = [];

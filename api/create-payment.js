@@ -253,31 +253,43 @@ export default async function handler(req, res) {
 
     const payment = await checkout.createPayment(paymentData, idempotenceKey);
 
-    // Логируем ответ от ЮКассы для отладки
-    console.log(`[${requestId}] YooKassa payment response:`, {
+    // Логируем полный ответ от ЮКассы для отладки
+    console.log(`[${requestId}] YooKassa payment response (full):`, JSON.stringify({
       id: payment.id,
       status: payment.status,
       confirmation: payment.confirmation,
       confirmationUrl: payment.confirmation?.confirmation_url,
       confirmationData: payment.confirmation?.confirmation_data,
       returnUrl: returnUrl,
-      receipt: payment.receipt || 'not provided in response',
-      hasReceipt: !!payment.receipt
-    });
+      receipt: payment.receipt || null,
+      hasReceipt: !!payment.receipt,
+      // Дополнительные поля, которые могут содержать информацию об ошибках
+      cancellation_details: payment.cancellation_details,
+      metadata: payment.metadata
+    }, null, 2));
 
     // Проверяем, был ли receipt принят ЮКассой
     if (receipt && !payment.receipt) {
-      console.warn(`[${requestId}] ⚠️ WARNING: Receipt was sent but not returned in payment response. This might mean:`);
-      console.warn(`[${requestId}]   1. Online cash register is not configured in YooKassa`);
-      console.warn(`[${requestId}]   2. OFD (Operator of Fiscal Data) is not connected`);
-      console.warn(`[${requestId}]   3. Receipt sending is disabled in YooKassa settings`);
-      console.warn(`[${requestId}]   4. Using test shop (receipts may not work in test mode)`);
+      console.warn(`[${requestId}] ⚠️ WARNING: Receipt was sent but not returned in payment response.`);
+      console.warn(`[${requestId}] This usually means one of the following:`);
+      console.warn(`[${requestId}]   1. ❌ Online cash register is NOT configured in YooKassa personal account`);
+      console.warn(`[${requestId}]   2. ❌ OFD (Operator of Fiscal Data) is NOT connected`);
+      console.warn(`[${requestId}]   3. ❌ Receipt sending is disabled in YooKassa settings`);
+      console.warn(`[${requestId}]   4. ⚠️  Using test shop (receipts may not work in test mode)`);
+      console.warn(`[${requestId}]   5. ⚠️  Receipt will be created AFTER payment is completed (check payment status endpoint)`);
+      console.warn(`[${requestId}]`);
+      console.warn(`[${requestId}] 📋 Action required:`);
+      console.warn(`[${requestId}]   - Go to https://yookassa.ru → Settings → Online cash register`);
+      console.warn(`[${requestId}]   - Configure online cash register and connect OFD`);
+      console.warn(`[${requestId}]   - Enable receipt sending in Settings → Receipts`);
+      console.warn(`[${requestId}]   - Make sure you're using PRODUCTION shop, not test shop`);
     } else if (receipt && payment.receipt) {
       console.log(`[${requestId}] ✅ Receipt accepted by YooKassa:`, {
         receiptId: payment.receipt.id,
         status: payment.receipt.status,
         fiscalDocumentNumber: payment.receipt.fiscal_document_number,
-        fiscalStorageNumber: payment.receipt.fiscal_storage_number
+        fiscalStorageNumber: payment.receipt.fiscal_storage_number,
+        registeredAt: payment.receipt.registered_at
       });
     }
 
