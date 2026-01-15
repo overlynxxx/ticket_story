@@ -76,11 +76,11 @@ function LegalInfo({ webApp }) {
         <div className="info-card">
           <div className="info-row">
             <span className="info-label">Email:</span>
-            <span className="info-value">support@example.com</span>
+            <span className="info-value">help@tupik.xyz</span>
           </div>
           <div className="info-row">
             <span className="info-label">Телефон:</span>
-            <span className="info-value">+7 (XXX) XXX-XX-XX</span>
+            <span className="info-value">+7 (812) 456-78-90</span>
           </div>
           <div className="info-row">
             <span className="info-label">Время работы:</span>
