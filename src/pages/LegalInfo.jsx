@@ -84,7 +84,7 @@ function LegalInfo({ webApp }) {
           </div>
           <div className="info-row">
             <span className="info-label">Время работы:</span>
-            <span className="info-value">Пн-Пт: 10:00 - 20:00</span>
+            <span className="info-value">Пт-Вск: 18:00 - 06:00</span>
           </div>
         </div>
       </div>
