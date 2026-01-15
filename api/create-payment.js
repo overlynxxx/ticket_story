@@ -6,6 +6,16 @@ import { join } from 'path';
 export default async function handler(req, res) {
   const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   console.log(`[${requestId}] [${new Date().toISOString()}] create-payment: ${req.method} ${req.url}`);
+  
+  // Устанавливаем заголовки для корректной работы из всех регионов
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, User-Agent');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   console.log(`[${requestId}] Headers:`, {
     origin: req.headers.origin,
     host: req.headers.host,

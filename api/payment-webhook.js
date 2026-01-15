@@ -464,6 +464,16 @@ export default async function handler(req, res) {
     'user-agent': req.headers['user-agent']?.substring(0, 50)
   });
 
+  // Устанавливаем заголовки для корректной работы из всех регионов
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, User-Agent');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     console.log(`[${requestId}] Method not allowed: ${req.method}`);
     return res.status(405).json({ success: false, error: 'Method not allowed' });
