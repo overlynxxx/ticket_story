@@ -1,6 +1,32 @@
 {
   "events": [
     {
+      "id": "mtv-party-2025-01-23",
+      "name": "MTV PARTY",
+      "artists": "SHIMO",
+      "date": "23 января",
+      "time": "20:00",
+      "venue": "Бар Тупик",
+      "address": "СПб, Мельничная ул., 4В",
+      "description": "MTV PARTY с диджеем SHIMO",
+      "ticketCategories": [
+        {
+          "id": "standard",
+          "name": "Стандарт",
+          "price": 500,
+          "description": "Вход на вечеринку",
+          "available": true
+        },
+        {
+          "id": "vip",
+          "name": "VIP",
+          "price": 1000,
+          "description": "VIP зона",
+          "available": true
+        }
+      ]
+    },
+    {
       "id": "antifragility-2025-01-17",
       "name": "⛓‍💥 Антихрупкость",
       "artists": [
